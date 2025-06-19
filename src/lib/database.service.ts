@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { LicenseType, MineType, WeddingGiftType } from '../generated/prisma';
+import { LicenseType, MineType, WeddingGiftType } from '@prisma/client';
 
 export class DatabaseService {
   static async initialize() {

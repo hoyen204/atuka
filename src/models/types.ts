@@ -1,4 +1,3 @@
-// Export Prisma generated types
 export type {
   User,
   Account,
@@ -14,10 +13,10 @@ export type {
   MineType,
   MineResourceType,
   WeddingGiftType,
-} from '../generated/prisma';
+} from '@prisma/client';
 
 // Import LicenseType for the type definition
-import type { LicenseType } from '../generated/prisma';
+import type { LicenseType } from '@prisma/client';
 
 // Additional utility types
 export type UserCreateInput = {
