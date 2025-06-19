@@ -1,0 +1,28 @@
+{
+  "name": "HH3D Management System",
+  "short_name": "HH3D Manager",
+  "description": "Hệ thống quản lý tài khoản HH3D chuyên nghiệp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1E293B",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "vi",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["games", "productivity", "utilities"],
+  "screenshots": [
+    {
+      "src": "/character-hero.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ]
+} 

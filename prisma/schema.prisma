@@ -1,0 +1,228 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - main user accounts
+model User {
+  name                  String
+  zaloId                String   @id @map("zalo_id") @db.VarChar(255)
+  licenseType           LicenseType @map("license_type")
+  licenseExpired        DateTime?   @map("license_expired")
+  email                 String?     @unique @db.VarChar(255)
+  password              String?     @db.VarChar(255)
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+  isAdmin               Boolean     @default(false) @map("is_admin")
+  isSubscribed          Boolean     @default(false) @map("is_subscribed")
+  accountPlus           Int         @default(0) @map("account_plus")
+  accountPlusExpired    DateTime?   @map("account_plus_expired")
+  canTakeover           Boolean     @default(false) @map("can_takeover")
+  banned                Boolean     @default(false)
+
+  // Relations
+  accounts              Account[]
+  proxies               Proxy[]
+
+  @@map("users")
+  @@index([zaloId])
+}
+
+// Account model - game accounts
+model Account {
+  id                    Int       @id
+  name                  String    @db.VarChar(255)
+  cookie                String    @db.Text
+  toggle                Boolean   @default(true)
+  mineId                String?   @map("mineId") @db.VarChar(255)
+  creatorId             String    @map("creatorId") @db.VarChar(255)
+  security              Json?
+  securityUpdatedAt     DateTime? @map("securityUpdatedAt")
+  cultivation           Int?
+  bootleNeckCultivation Int?      @map("bootleNeckCultivation")
+  gem                   Int?
+  fairyGem              Int?      @map("fairyGem")
+  createdAt             DateTime  @default(now()) @map("createdAt")
+  updatedAt             DateTime  @updatedAt @map("updatedAt")
+  mineTimeRange         Json?     @map("mineTimeRange")
+  element               String?   @db.VarChar(255)
+  friendToGiftId        Json?     @map("friendToGiftId")
+  secretKey             String?   @map("secretKey") @db.VarChar(255)
+  birthday              String?   @db.VarChar(255)
+  username              String?   @db.VarChar(255)
+  accountPassword       String?   @map("accountPassword") @db.VarChar(255)
+  proxy                 String?   @db.VarChar(255)
+  email                 String?   @db.VarChar(255)
+  autoElement           Boolean?  @default(true) @map("autoElement")
+  isLogout              Boolean?  @default(false) @map("isLogout")
+  availableBuffAmount   Int       @default(100) @map("availableBuffAmount")
+  autoLoginTimeRange    Json      @map("autoLoginTimeRange")
+  coin                  Int?
+  lockCoin              Int?      @map("lockCoin")
+  clanRole              String?   @map("clanRole") @db.VarChar(255)
+  clanId                String?   @map("clanId") @db.VarChar(255)
+  clanName              String?   @map("clanName") @db.VarChar(255)
+  mineType              MineType? @default(full) @map("mineType")
+
+  // Relations
+  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  dailyActivities       AccountDailyActivity[]
+  weddingReceived       WeddingReceived[]
+
+  @@map("accounts")
+  @@index([toggle])
+  @@index([securityUpdatedAt])
+  @@index([cultivation])
+  @@index([creatorId])
+}
+
+// Account daily activities tracking
+model AccountDailyActivity {
+  id                    Int       @id @default(autoincrement())
+  accountId             Int       @map("account_id")
+  progress              Int?
+  totalCultivation      Int?      @map("total_cultivation")
+  totalGem              Int?      @map("total_gem")
+  detail                Json?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("account_daily_activities")
+  @@index([accountId])
+}
+
+// Clan questions for automation
+model ClanQuestion {
+  id                    Int       @id @default(autoincrement())
+  question              String    @db.VarChar(255)
+  answer                String    @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  questionId            Int?      @map("question_id")
+
+  @@map("clan_questions")
+}
+
+// Clan information
+model Clan {
+  id                    Int       @id
+  name                  String    @db.VarChar(255)
+  level                 Int
+  leader                String    @db.VarChar(255)
+  leaderId              Int       @map("leader_id")
+  memberCount           Int       @map("member_count")
+  memberLimit           Int       @map("member_limit")
+
+  @@map("clans")
+}
+
+// Configuration settings
+model Config {
+  key                   String    @id @db.VarChar(255)
+  value                 String    @db.VarChar(255)
+
+  @@map("configs")
+}
+
+// HH3D member information
+model Hh3dMember {
+  id                    Int       @id
+  name                  String    @db.VarChar(255)
+  tuVi                  Int?      @map("tu_vi")
+
+  @@map("hh3d_members")
+}
+
+// Mine locations
+model Mine {
+  id                    Int       @id
+  name                  String    @db.VarChar(255)
+  isPeaceful            Boolean   @map("isPeaceful")
+  updatedAt             DateTime  @updatedAt @map("updatedAt")
+  createdAt             DateTime  @default(now()) @map("createdAt")
+  type                  MineResourceType
+
+  @@map("mines")
+}
+
+// Proxy management
+model Proxy {
+  id                    Int       @id @default(autoincrement())
+  host                  String    @db.VarChar(255)
+  port                  Int
+  username              String?   @db.VarChar(255)
+  password              String?   @db.VarChar(255)
+  enabled               Boolean   @default(true)
+  creatorId             String    @map("creator_id") @db.VarChar(255)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
+
+  @@map("proxies")
+  @@index([creatorId])
+}
+
+// Wedding gift tracking
+model WeddingReceived {
+  id                    Int       @id @default(autoincrement())
+  accountId             Int       @map("account_id")
+  roomId                String    @map("room_id") @db.VarChar(255)
+  message               String    @db.VarChar(255)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  accountName           String    @map("account_name") @db.VarChar(255)
+  accountCreatorId      String    @map("account_creator_id") @db.VarChar(255)
+  amount                Int
+  type                  WeddingGiftType
+
+  // Relations
+  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("wedding_received")
+  @@index([accountId])
+  @@index([roomId])
+  @@index([createdAt])
+}
+
+// Enums
+enum LicenseType {
+  FREE
+  BASIC
+  PRO
+}
+
+enum MineType {
+  min
+  max
+  full
+}
+
+enum MineResourceType {
+  gold
+  silver
+  copper
+}
+
+enum WeddingGiftType {
+  TienNgoc @map("Tiên Ngọc")
+  TuVi     @map("Tu Vi")
+  TinhThach @map("Tinh Thạch")
+  Xu       @map("Xu")
+  XuKhoa   @map("Xu Khóa")
+}
