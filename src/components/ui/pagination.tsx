@@ -1,14 +1,17 @@
 import * as React from "react"
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
+import { ChevronLeft, ChevronRight, MoreHorizontal, ChevronsLeft, ChevronsRight } from "lucide-react"
 
 import { cn } from "../../lib/utils"
 import { Button, ButtonProps } from "./button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select"
+import { Input } from "./input"
+import { useResponsive } from "../../hooks/useResponsive"
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
     aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-end", className)}
+    className={cn("mx-auto flex w-full justify-center", className)}
     {...props}
   />
 )
@@ -107,12 +110,44 @@ PaginationEllipsis.displayName = "PaginationEllipsis"
 interface PaginationComponentProps {
   currentPage: number
   totalPages: number
+  pageSize: number
+  total: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
-export function PaginationComponent({ currentPage, totalPages, onPageChange }: PaginationComponentProps) {
+export function PaginationComponent({ 
+  currentPage, 
+  totalPages, 
+  pageSize, 
+  total, 
+  onPageChange, 
+  onPageSizeChange 
+}: PaginationComponentProps) {
+  const [jumpPage, setJumpPage] = React.useState("")
+  const { isMobile } = useResponsive()
+  
+  const startEntry = (currentPage - 1) * pageSize + 1
+  const endEntry = Math.min(currentPage * pageSize, total)
+  
   const getVisiblePages = () => {
-    const delta = 2
+    if (isMobile) {
+      // Chỉ hiển thị 3 pages tối đa trên mobile
+      if (totalPages <= 3) {
+        return Array.from({ length: totalPages }, (_, i) => i + 1)
+      }
+      
+      if (currentPage === 1) {
+        return [1, 2, "..."]
+      } else if (currentPage === totalPages) {
+        return ["...", totalPages - 1, totalPages]
+      } else {
+        return ["...", currentPage, "..."]
+      }
+    }
+    
+    // Desktop logic giữ nguyên
+    const delta = 1
     const range = []
     
     for (
@@ -136,53 +171,241 @@ export function PaginationComponent({ currentPage, totalPages, onPageChange }: P
     return range
   }
 
-  return (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
+  const handleJumpPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const page = parseInt(jumpPage)
+      if (page >= 1 && page <= totalPages) {
+        onPageChange(page)
+        setJumpPage("")
+      }
+    }
+  }
+
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-3 w-full animate-pagination-fade-in">
+        {/* Mobile Info Row - Compact */}
+        <div className="flex items-center justify-between text-xs text-gray-600 animate-pagination-slide-in">
+          <span className="truncate">
+            {startEntry}-{endEntry} / {total.toLocaleString()}
+          </span>
+          
+          {onPageSizeChange && (
+            <div className="flex items-center gap-1">
+              <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value))}>
+                <SelectTrigger className="w-16 h-8 text-xs border-0 bg-gray-100 dark:bg-gray-800">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Navigation - Large Touch Buttons */}
+        <div className="flex items-center justify-center pagination-mobile-spacing">
+          {/* Previous */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="gap-1 pl-2.5"
+            className="pagination-mobile-touch px-3 flex-shrink-0 active:animate-pagination-button-press transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
           >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Trước</span>
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-        </PaginationItem>
-        
-        {getVisiblePages().map((page, index) => (
-          <PaginationItem key={index}>
-            {page === "..." ? (
-              <PaginationEllipsis />
-            ) : (
-              <Button
-                variant={currentPage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => onPageChange(page as number)}
-                className="w-9 h-9"
-              >
-                {page}
-              </Button>
-            )}
-          </PaginationItem>
-        ))}
-        
-        <PaginationItem>
+
+          {/* Page Numbers - Touch Friendly */}
+          <div className="flex items-center gap-2 flex-1 justify-center max-w-xs">
+            {getVisiblePages().map((page, index) => (
+              <React.Fragment key={index}>
+                {page === "..." ? (
+                  <span className="flex pagination-mobile-touch w-8 items-center justify-center text-sm text-gray-400">
+                    ⋯
+                  </span>
+                ) : (
+                  <Button
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onPageChange(page as number)}
+                    className={cn(
+                      "pagination-mobile-touch w-11 text-sm font-medium active:animate-pagination-number-pop transition-all duration-200",
+                      currentPage === page 
+                        ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20" 
+                        : "hover:bg-gray-50 dark:hover:bg-gray-800 hover:scale-105"
+                    )}
+                  >
+                    {page}
+                  </Button>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {/* Next */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="gap-1 pr-2.5"
+            className="pagination-mobile-touch px-3 flex-shrink-0 active:animate-pagination-button-press transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
           >
-            <span>Sau</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+        </div>
+
+        {/* Mobile Page Info */}
+        <div className="text-center text-xs text-gray-500 bg-gray-50 dark:bg-gray-800/50 rounded-full py-2 px-4 animate-pagination-slide-in">
+          Trang {currentPage} / {totalPages}
+          {total > 0 && (
+            <span className="block text-[10px] text-gray-400 mt-0.5">
+              {total.toLocaleString()} items
+            </span>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop layout (cải thiện với animations)
+  return (
+    <div className="flex flex-col gap-4 animate-pagination-fade-in">
+      {/* Desktop Info và Controls */}
+      <div className="flex items-center justify-between text-sm text-gray-600 animate-pagination-slide-in">
+        <div className="flex items-center gap-4">
+          <span className="transition-colors duration-200">
+            Hiển thị {startEntry.toLocaleString()} - {endEntry.toLocaleString()} trong tổng số {total.toLocaleString()} mục
+          </span>
+          
+          {onPageSizeChange && (
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">Hiển thị:</span>
+              <Select value={pageSize.toString()} onValueChange={(value) => onPageSizeChange(parseInt(value))}>
+                <SelectTrigger className="w-20 h-8 transition-all duration-200 hover:border-primary/50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-gray-500">mục/trang</span>
+            </div>
+          )}
+        </div>
+
+        {/* Jump to page */}
+        <div className="flex items-center gap-2">
+          <span className="text-gray-500">Đến trang:</span>
+          <Input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={jumpPage}
+            onChange={(e) => setJumpPage(e.target.value)}
+            onKeyDown={handleJumpPage}
+            placeholder={currentPage.toString()}
+            className="w-16 h-8 text-center transition-all duration-200 hover:border-primary/50 focus:scale-105"
+          />
+          <span className="text-gray-500">/ {totalPages}</span>
+        </div>
+      </div>
+
+      {/* Desktop Pagination Controls */}
+      <Pagination className="animate-pagination-slide-in">
+        <PaginationContent>
+          {/* First Page */}
+          <PaginationItem>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(1)}
+              disabled={currentPage <= 1}
+              title="Trang đầu tiên"
+              className="hover:scale-105 active:animate-pagination-button-press transition-all duration-200 disabled:hover:scale-100"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+          </PaginationItem>
+
+          {/* Previous Page */}
+          <PaginationItem>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="gap-1 pl-2.5 hover:scale-105 active:animate-pagination-button-press transition-all duration-200 disabled:hover:scale-100"
+              title="Trang trước"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Trước</span>
+            </Button>
+          </PaginationItem>
+          
+          {/* Page Numbers */}
+          {getVisiblePages().map((page, index) => (
+            <PaginationItem key={index}>
+              {page === "..." ? (
+                <PaginationEllipsis className="text-gray-400" />
+              ) : (
+                <Button
+                  variant={currentPage === page ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onPageChange(page as number)}
+                  className={cn(
+                    "w-9 h-9 hover:scale-105 active:animate-pagination-number-pop transition-all duration-200",
+                    currentPage === page 
+                      ? "ring-2 ring-primary/20 shadow-lg bg-primary text-primary-foreground" 
+                      : "hover:bg-accent/50"
+                  )}
+                  title={`Trang ${page}`}
+                >
+                  {page}
+                </Button>
+              )}
+            </PaginationItem>
+          ))}
+          
+          {/* Next Page */}
+          <PaginationItem>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="gap-1 pr-2.5 hover:scale-105 active:animate-pagination-button-press transition-all duration-200 disabled:hover:scale-100"
+              title="Trang sau"
+            >
+              <span>Sau</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </PaginationItem>
+
+          {/* Last Page */}
+          <PaginationItem>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(totalPages)}
+              disabled={currentPage >= totalPages}
+              title="Trang cuối cùng"
+              className="hover:scale-105 active:animate-pagination-button-press transition-all duration-200 disabled:hover:scale-100"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
   )
 }
 

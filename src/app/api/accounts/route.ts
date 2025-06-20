@@ -17,14 +17,15 @@ export async function GET(request: Request) {
     const skip = (page - 1) * pageSize;
 
     const whereClause: any = {
-      creatorId: session.user.zalo_id
+      creatorId: session.user.zalo_id,
+      isLogout: false
     };
     
     if (search) {
       whereClause.OR = [
         { name: { contains: search } },
         { clanName: { contains: search } },
-        { id: { equals: parseInt(search) || 0 } }
+        { id: { equals: parseInt(search) || 0 } },
       ];
     }
 
@@ -43,12 +44,17 @@ export async function GET(request: Request) {
           cookie: true,
           mineId: true,
           mineTimeRange: true,
+          mineType: true,
           availableBuffAmount: true,
           clanId: true,
           clanName: true,
           toggle: true,
           cultivation: true,
+          bootleNeckCultivation: true,
           gem: true,
+          fairyGem: true,
+          coin: true,
+          lockCoin: true,
           creatorId: true,
           createdAt: true,
           updatedAt: true

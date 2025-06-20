@@ -55,6 +55,10 @@ export async function PATCH(request: Request) {
       processedUpdateData.availableBuffAmount = parseInt(updateData.availableBuffAmount);
     }
 
+    if (updateData.mineType !== undefined) {
+      processedUpdateData.mineType = updateData.mineType;
+    }
+
     // Perform batch update
     const result = await prisma.account.updateMany({
       where: {

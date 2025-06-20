@@ -174,13 +174,13 @@ model Proxy {
 // Wedding gift tracking
 model WeddingReceived {
   id                    Int       @id @default(autoincrement())
-  accountId             Int       @map("account_id")
-  roomId                String    @map("room_id") @db.VarChar(255)
+  accountId             Int       @map("accountId")
+  roomId                String    @map("roomId") @db.VarChar(255)
   message               String    @db.VarChar(255)
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  accountName           String    @map("account_name") @db.VarChar(255)
-  accountCreatorId      String    @map("account_creator_id") @db.VarChar(255)
+  createdAt             DateTime  @default(now()) @map("createdAt")
+  updatedAt             DateTime  @updatedAt @map("updatedAt")
+  accountName           String    @map("accountName") @db.VarChar(255)
+  accountCreatorId      String    @map("accountCreatorId") @db.VarChar(255)
   amount                Int
   type                  WeddingGiftType
 

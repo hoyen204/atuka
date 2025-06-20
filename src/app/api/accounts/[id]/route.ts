@@ -13,7 +13,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const accountId = parseInt(params.id);
     const body = await request.json();
     
-    const { mineId, mineTimeRange, availableBuffAmount, toggle } = body;
+    const { mineId, mineTimeRange, mineType, availableBuffAmount, toggle } = body;
 
     const updateData: any = {};
     
@@ -23,6 +23,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     
     if (mineTimeRange !== undefined) {
       updateData.mineTimeRange = mineTimeRange;
+    }
+
+    if (mineType !== undefined) {
+      updateData.mineType = mineType;
     }
     
     if (availableBuffAmount !== undefined) {
@@ -41,6 +45,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         name: true,
         mineId: true,
         mineTimeRange: true,
+        mineType: true,
         availableBuffAmount: true,
         clanId: true,
         clanName: true,
@@ -72,12 +77,17 @@ export async function GET(request: Request, { params }: { params: { id: string }
         cookie: true,
         mineId: true,
         mineTimeRange: true,
+        mineType: true,
         availableBuffAmount: true,
         clanId: true,
         clanName: true,
         toggle: true,
         cultivation: true,
+        bootleNeckCultivation: true,
         gem: true,
+        fairyGem: true,
+        coin: true,
+        lockCoin: true,
         creatorId: true,
         createdAt: true,
         updatedAt: true

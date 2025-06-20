@@ -1,17 +1,29 @@
 import { PrismaClient } from '@prisma/client';
+import { createPrismaMonitor } from './prisma-monitor';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  prisma: ReturnType<typeof createPrismaWithMonitoring> | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
+function createPrismaWithMonitoring() {
+  const basePrisma = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'], // Remove 'query' to avoid duplicate logs
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
     },
-  },
-});
+  });
+
+  // Only add monitoring in development
+  if (process.env.NODE_ENV === 'development') {
+    return basePrisma.$extends(createPrismaMonitor());
+  }
+  
+  return basePrisma;
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaWithMonitoring();
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;

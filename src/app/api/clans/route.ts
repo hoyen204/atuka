@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth.config';
+import { withDBMonitoring } from '@/lib/db-monitor';
 
-export async function GET(request: Request) {
+async function getClanHandler(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   const search = searchParams.get('search') || '';
 
   try {
+    const startTime = Date.now();
     const skip = (page - 1) * pageSize;
     
     const where = search
@@ -26,6 +28,7 @@ export async function GET(request: Request) {
         }
       : {};
 
+    // Get clans and total count
     const [clans, total] = await Promise.all([
       prisma.clan.findMany({
         where,
@@ -36,21 +39,48 @@ export async function GET(request: Request) {
       prisma.clan.count({ where })
     ]);
 
-    const enrichedClans = await Promise.all(
-      clans.map(async (clan) => {
-        const activeMembers = await prisma.account.count({
-          where: {
-            clanId: clan.id.toString(),
-            toggle: true
-          }
-        });
+    // If no clans, return early
+    if (clans.length === 0) {
+      return NextResponse.json({
+        clans: [],
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      });
+    }
 
-        return {
-          ...clan,
-          activeMembers
-        };
-      })
-    );
+    // Get clan IDs for the active members query
+    const clanIds = clans.map(clan => clan.id.toString());
+    
+    // Query active members count for all clans in one go
+    const activeMembersData = await prisma.account.groupBy({
+      by: ['clanId'],
+      where: {
+        toggle: true,
+        clanId: {
+          in: clanIds
+        }
+      },
+      _count: {
+        id: true
+      }
+    });
+
+    // Create a lookup map for O(1) access
+    const activeMembersMap = activeMembersData.reduce((acc, item) => {
+      acc[item.clanId || ''] = item._count.id;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Enrich clans with active members count
+    const enrichedClans = clans.map(clan => ({
+      ...clan,
+      activeMembers: activeMembersMap[clan.id.toString()] || 0
+    }));
+
+    const endTime = Date.now();
+    console.log(`✅ Clans API optimized: ${endTime - startTime}ms for ${clans.length} clans (was N+1, now 3 queries)`);
 
     return NextResponse.json({
       clans: enrichedClans,
@@ -63,4 +93,6 @@ export async function GET(request: Request) {
     console.error('Error fetching clans:', error);
     return NextResponse.json({ error: 'Failed to fetch clans' }, { status: 500 });
   }
-} 
+}
+
+export const GET = withDBMonitoring(getClanHandler, 'GET /api/clans'); 

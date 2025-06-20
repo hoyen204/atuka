@@ -1,26 +1,8 @@
 "use client";
 
-import React from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter, usePathname } from "next/navigation";
-import {
-  User,
-  LogOut,
-  Home,
-  Users,
-  Settings,
-  Shield,
-  Server,
-  UserCheck,
-  Menu,
-  X,
-  Bell,
-  Search,
-  ChevronDown,
-} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,10 +11,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  Bell,
+  ChevronDown,
+  Gift,
+  Home,
+  LogOut,
+  Menu,
+  Search,
+  Server,
+  Settings,
+  Shield,
+  UserCheck,
+  Users,
+  X
+} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
@@ -73,7 +72,9 @@ export default function DashboardLayout({
             </div>
           </div>
           <div>
-            <h2 className="text-white font-bold text-xl mb-2">HH3D Management</h2>
+            <h2 className="text-white font-bold text-xl mb-2">
+              HH3D Management
+            </h2>
             <p className="text-white/70 font-medium">Đang tải hệ thống...</p>
           </div>
           <div className="flex justify-center">
@@ -93,25 +94,31 @@ export default function DashboardLayout({
       name: "Dashboard",
       href: "/dashboard",
       icon: Home,
-      description: "Tổng quan hệ thống"
+      description: "Tổng quan hệ thống",
     },
     {
       name: "Account Management",
       href: "/dashboard/accounts",
       icon: UserCheck,
-      description: "Quản lý tài khoản"
+      description: "Quản lý tài khoản",
     },
     {
       name: "Clans Management",
       href: "/dashboard/clans",
       icon: Shield,
-      description: "Quản lý clan"
+      description: "Quản lý clan",
     },
     {
       name: "Proxy Management",
       href: "/dashboard/proxies",
       icon: Server,
-      description: "Quản lý proxy"
+      description: "Quản lý proxy",
+    },
+    {
+      name: "Wedding Reports",
+      href: "/dashboard/wedding-reports",
+      icon: Gift,
+      description: "Báo cáo quà cưới",
     },
   ];
 
@@ -121,11 +128,19 @@ export default function DashboardLayout({
       name: "User Management",
       href: "/dashboard/user",
       icon: Users,
-      description: "Quản lý người dùng"
+      description: "Quản lý người dùng",
+    },
+    {
+      name: "System Options",
+      href: "/dashboard/system-options",
+      icon: Settings,
+      description: "Cấu hình hệ thống",
     },
   ];
 
-  const fullNavigation = user?.is_admin ? [...navigation, ...adminNavigation] : navigation;
+  const fullNavigation = user?.is_admin
+    ? [...navigation, ...adminNavigation]
+    : [...navigation];
 
   const isActivePath = (href: string) => {
     if (href === "/dashboard") {
@@ -140,9 +155,9 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+      <div className="lg:hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 flex-shrink-0">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Button
@@ -151,7 +166,11 @@ export default function DashboardLayout({
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? (
+                <X className="w-5 h-5" />
+              ) : (
+                <Menu className="w-5 h-5" />
+              )}
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 relative">
@@ -168,7 +187,7 @@ export default function DashboardLayout({
               <h1 className="font-bold text-lg">HH3D</h1>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">
               <Bell className="w-5 h-5" />
@@ -191,11 +210,16 @@ export default function DashboardLayout({
                 <DropdownMenuLabel>
                   <div>
                     <p className="font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.license_type}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.license_type}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-600"
+                >
                   <LogOut className="w-4 h-4 mr-2" />
                   Đăng xuất
                 </DropdownMenuItem>
@@ -207,16 +231,26 @@ export default function DashboardLayout({
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
       )}
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
-        <aside className={`
+        <aside
+          className={`
           fixed lg:static inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:transform-none
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${
+            isMobileMenuOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }
           bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl border-r border-slate-200 dark:border-slate-700
-        `}>
+          flex flex-col h-screen
+        `}
+        >
           {/* Logo Section */}
           <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-800/50 dark:to-slate-700/50">
             <div className="flex items-center gap-4">
@@ -254,7 +288,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Navigation */}
-          <nav className="p-4 flex-1 overflow-y-auto">
+          <nav className="p-4 flex-1 overflow-y-auto min-h-0">
             <div className="space-y-2">
               {fullNavigation.map((item) => {
                 const isActive = isActivePath(item.href);
@@ -273,16 +307,24 @@ export default function DashboardLayout({
                         <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
                       )}
                       <div className="relative p-4 flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                          isActive ? "bg-white/20" : "bg-slate-100 dark:bg-slate-700 group-hover:bg-primary/10"
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                            isActive
+                              ? "bg-white/20"
+                              : "bg-slate-100 dark:bg-slate-700 group-hover:bg-primary/10"
+                          }`}
+                        >
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{item.name}</p>
-                          <p className={`text-xs ${
-                            isActive ? "text-white/80" : "text-muted-foreground"
-                          }`}>
+                          <p
+                            className={`text-xs ${
+                              isActive
+                                ? "text-white/80"
+                                : "text-muted-foreground"
+                            }`}
+                          >
                             {item.description}
                           </p>
                         </div>
@@ -315,7 +357,10 @@ export default function DashboardLayout({
                       {user.name}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                      <Badge
+                        variant="secondary"
+                        className="text-xs px-2 py-0.5"
+                      >
                         {user.license_type}
                       </Badge>
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -337,9 +382,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0 min-h-screen">
-          {children}
-        </main>
+        <main className="flex-1 lg:ml-0 h-full overflow-y-auto">{children}</main>
       </div>
     </div>
   );

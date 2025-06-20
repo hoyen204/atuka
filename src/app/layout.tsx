@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionWrapper from "@/components/SessionWrapper";
 import { Toaster } from "@/components/Toaster";
+import GlobalLoading from "@/components/GlobalLoading";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,6 +62,7 @@ export default function RootLayout({
           <div className="min-h-screen bg-background">
             {children}
             <Toaster />
+            <GlobalLoading />
           </div>
         </SessionWrapper>
       </body>
