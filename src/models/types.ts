@@ -112,4 +112,6 @@ export interface ClansResponse {
   page: number;
   pageSize: number;
   totalPages: number;
-} 
+}
+
+ 

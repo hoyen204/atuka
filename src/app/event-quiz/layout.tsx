@@ -1,6 +1,5 @@
 import "@/app/globals.css";
 import GlobalLoading from "@/components/GlobalLoading";
-import SessionWrapper from "@/components/SessionWrapper";
 import { Toaster } from "@/components/Toaster";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -74,11 +73,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="min-h-screen bg-background">
-          <SessionWrapper>
-            {children}
-            <Toaster />
-            <GlobalLoading />
-          </SessionWrapper>
+          {children}
+          <Toaster />
+          <GlobalLoading />
         </div>
       </body>
     </html>

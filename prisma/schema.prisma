@@ -103,11 +103,22 @@ model ClanQuestion {
   id                    Int       @id @default(autoincrement())
   question              String    @db.VarChar(255)
   answer                String    @db.Text
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  questionId            Int?      @map("question_id")
+  createdAt             DateTime  @default(now()) @map("createdAt")
+  updatedAt             DateTime  @updatedAt @map("updatedAt")
+  questionId            Int?      @map("questionId")
 
   @@map("clan_questions")
+}
+
+model ClanQuestionVanDap {
+  id                    Int       @id @default(autoincrement())
+  question              String    @db.VarChar(255)
+  answer                String    @db.Text
+  createdAt             DateTime  @default(now()) @map("createdAt")
+  updatedAt             DateTime  @updatedAt @map("updatedAt")
+  questionId            Int?      @map("questionId")
+
+  @@map("clan_questions_van_dap")
 }
 
 // Clan information

@@ -20,16 +20,18 @@ export function createPrismaMonitor() {
             const duration = Date.now() - start;
             
             // Log slow queries (>100ms) or in development
-            if (duration > 100 || process.env.NODE_ENV === 'development') {
+            if (duration > 350 || process.env.NODE_ENV === "development") {
               const queryInfo: QueryInfo = {
                 query: `${model}.${operation}`,
                 params: JSON.stringify(args).substring(0, 200),
                 duration,
-                target: model || 'unknown'
+                target: model || "unknown",
               };
-              
-              if (duration > 100) {
-                console.warn(`🐌 Slow query detected: ${queryInfo.query} (${duration}ms)`);
+
+              if (duration > 350) {
+                console.warn(
+                  `🐌 Slow query detected: ${queryInfo.query} (${duration}ms)`
+                );
                 console.warn(`   Params: ${queryInfo.params}`);
               } else {
                 console.log(`📊 ${queryInfo.query}: ${duration}ms`);
