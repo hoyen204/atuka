@@ -180,6 +180,10 @@ export default function AccountsPage() {
         search,
       });
 
+      if (page > 1 && accounts.length > 0) {
+        params.append("cursor", accounts[accounts.length - 1].id.toString());
+      }
+
       if (clanFilter && clanFilter !== "all") {
         params.append("clanId", clanFilter);
       }
@@ -585,7 +589,7 @@ export default function AccountsPage() {
               <Badge variant="secondary">{total} tài khoản</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto">
+          <CardContent className="flex-1">
             <div
               className={`pb-4 border-b mb-4 ${isMobile ? "-mx-6 px-6" : ""}`}
             >
@@ -706,7 +710,7 @@ export default function AccountsPage() {
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
-                          size="sm"
+                          size="default"
                           onClick={() => setSelectedAccounts([])}
                           className={isMobile ? "w-full" : ""}
                         >
@@ -722,9 +726,9 @@ export default function AccountsPage() {
               </div>
             )}
 
-            <div className="rounded-md border flex-1 flex flex-col overflow-hidden">
+            <div className="rounded-md border flex-1 flex flex-col">
               <div className="flex-1">
-                <Table className={`${isCompactView ? "text-sm" : ""} `}>
+                <Table className={`${isCompactView ? "text-sm" : ""}`}>
                   <TableHeader>
                     <TableRow>
                       <TableHead>

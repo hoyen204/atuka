@@ -1,19 +1,23 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { useResponsive } from "@/hooks/useResponsive";
 
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  >(({ className, ...props }, ref) => {
+  const { isMobile, isTablet, isDesktop } = useResponsive();
+  return (
+    <div className={cn("relative w-full overflow-auto", isMobile ? "max-h-[45vh]" : "max-h-[60vh]")}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
       {...props}
     />
   </div>
-))
+  )
+})
 Table.displayName = "Table"
 
 interface TableHeaderProps extends React.HTMLAttributes<HTMLTableSectionElement> {

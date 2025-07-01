@@ -1,0 +1,18 @@
+services:
+  hh3d_van_dap:
+    build: .
+    image: dakmil204/hh3d_van_dap:latest
+    container_name: hh3d_van_dap
+    restart: unless-stopped
+    ports:
+      - 4001:3000
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+    volumes:
+      - ./.env:/app/.env
+    networks:
+      - mysql_network
+
+networks:
+  mysql_network:
+    external: true
