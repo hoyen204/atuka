@@ -81,7 +81,7 @@ export default function MaintenancePage() {
                   Chúng tôi xin lỗi vì sự bất tiện này và sẽ thông báo ngay khi hoàn tất.
                 </p>
 
-                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-md p-4 border border-blue-200 dark:border-blue-800">
                   <p className="text-blue-800 dark:text-blue-200 text-sm">
                     💡 <strong>Gợi ý:</strong> Bạn có thể tìm câu trả lời nhanh chóng thông qua bot zalo của chúng tôi.
                   </p>

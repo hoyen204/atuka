@@ -73,7 +73,7 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-50 max-h-96 min-w-[12rem] overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-xl backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-700 dark:bg-gray-900",
+        "relative z-50 max-h-96 min-w-[12rem] overflow-hidden rounded-md border-2 border-gray-200 bg-white shadow-xl backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-gray-700 dark:bg-gray-900",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className
@@ -116,7 +116,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-lg py-3 pl-10 pr-4 text-sm font-medium outline-none transition-all duration-150 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-900 dark:hover:bg-gray-800 dark:focus:bg-gray-800 dark:data-[state=checked]:bg-gray-800",
+      "relative flex w-full cursor-pointer select-none items-center rounded-md py-3 pl-10 pr-4 text-sm font-medium outline-none transition-all duration-150 hover:bg-blue-50 focus:bg-blue-50 focus:text-blue-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[state=checked]:bg-blue-100 data-[state=checked]:text-blue-900 dark:hover:bg-gray-800 dark:focus:bg-gray-800 dark:data-[state=checked]:bg-gray-800",
       className
     )}
     {...props}

@@ -45,7 +45,7 @@ export function StatusIndicator({
 
   return (
     <div className={cn(
-      "flex items-center justify-between p-3 rounded-lg transition-all duration-200",
+      "flex items-center justify-between p-3 rounded-md transition-all duration-200",
       config.bgColor,
       className
     )}>

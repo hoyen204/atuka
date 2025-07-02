@@ -12,7 +12,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border bg-card text-card-foreground shadow transition-all duration-300",
+      "rounded-md border bg-card text-card-foreground shadow transition-all duration-300",
       variant === "default" && "hover:shadow-lg hover:shadow-primary/5",
       variant === "interactive" && "hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1 cursor-pointer transform-gpu",
       variant === "glass" && "glass-effect hover:shadow-2xl",

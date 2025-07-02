@@ -59,7 +59,7 @@ export function DashboardWidget({
               </div>
             )}
           </div>
-          <div className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-2xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+          <div className={`w-14 h-14 bg-gradient-to-br ${gradient} rounded-md flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
             <Icon className="w-7 h-7" />
           </div>
         </div>

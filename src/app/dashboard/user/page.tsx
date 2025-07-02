@@ -315,7 +315,7 @@ export default function UserManagementPage() {
           {!isMobile && (
             <CardContent className="flex-1 overflow-y-auto flex flex-col">
               {/* Thanh thông tin tóm tắt */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-4 flex-shrink-0">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-md mb-4 flex-shrink-0">
                 <div className="flex items-center gap-6">
                   <div className="text-sm">
                     <span className="font-medium">Tổng người dùng:</span>{" "}

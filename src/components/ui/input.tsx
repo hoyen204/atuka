@@ -113,7 +113,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         {/* Ripple effect on focus */}
         <div className={cn(
-          "absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 pointer-events-none",
+          "absolute inset-0 rounded-md opacity-0 transition-opacity duration-300 pointer-events-none",
           "bg-gradient-to-r from-blue-400/10 to-purple-400/10",
           isFocused && "opacity-100"
         )} />

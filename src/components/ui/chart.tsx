@@ -17,7 +17,7 @@ interface ChartProps {
 export function Chart({ data, title, type = 'bar', height = 300, className }: ChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="p-6 bg-white rounded-lg border border-gray-200">
+      <div className="p-6 bg-white rounded-md border border-gray-200">
         <h3 className="text-lg font-semibold mb-4">{title}</h3>
         <div className="flex items-center justify-center h-48 text-gray-500">
           Không có dữ liệu
@@ -149,7 +149,7 @@ export function Chart({ data, title, type = 'bar', height = 300, className }: Ch
   }
 
   return (
-    <div className={`p-6 bg-white rounded-lg border border-gray-200 ${className}`}>
+    <div className={`p-6 bg-white rounded-md border border-gray-200 ${className}`}>
       {title && <h3 className="text-lg font-semibold mb-4">{title}</h3>}
       <div style={{ height }}>
         {type === 'bar' && <BarChart />}
@@ -172,7 +172,7 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, change, icon }: MetricCardProps) {
   return (
-    <div className="p-6 bg-white rounded-lg border border-gray-200">
+    <div className="p-6 bg-white rounded-md border border-gray-200">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>

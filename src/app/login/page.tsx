@@ -119,11 +119,11 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 stagger-children">
-              <div className="glass-effect rounded-xl p-4 border border-white/20 hover-lift">
+              <div className="glass-effect rounded-md p-4 border border-white/20 hover-lift">
                 <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2 animate-pulse" />
                 <p className="text-sm text-blue-100">Bảo mật đa lớp</p>
               </div>
-              <div className="glass-effect rounded-xl p-4 border border-white/20 hover-lift">
+              <div className="glass-effect rounded-md p-4 border border-white/20 hover-lift">
                 <Grid3X3 className="w-8 h-8 text-purple-400 mx-auto mb-2 animate-heartbeat" />
                 <p className="text-sm text-blue-100">Quản lý thông minh</p>
               </div>
@@ -158,7 +158,7 @@ export default function LoginPage() {
 
           <CardContent className="space-y-6">
             {error && (
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive animate-shake hover-lift">
+              <div className="flex items-center gap-3 p-4 rounded-md bg-destructive/10 border border-destructive/20 text-destructive animate-shake hover-lift">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0 animate-wiggle" />
                 <span className="text-sm font-medium">{error}</span>
               </div>

@@ -81,7 +81,7 @@ const DialogContent = React.forwardRef<
         className={cn(
           "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-6",
           "border-2 border-gray-200/50 bg-white/95 backdrop-blur-xl p-8 shadow-2xl",
-          "rounded-2xl",
+          "rounded-md",
           "dark:border-gray-700/50 dark:bg-gray-900/95",
           // Enhanced shadow and glow effects
           "shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)]",
@@ -89,7 +89,7 @@ const DialogContent = React.forwardRef<
           // Animation classes
           getAnimationClasses(),
           // Responsive design
-          "sm:rounded-2xl sm:max-w-md md:max-w-lg lg:max-w-xl",
+          "sm:rounded-md sm:max-w-md md:max-w-lg lg:max-w-xl",
           className
         )}
         {...props}

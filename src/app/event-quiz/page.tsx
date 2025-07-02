@@ -139,7 +139,7 @@ async function EventQuizContent({ searchParams }: EventQuizContentProps) {
             />
 
             {search && questions.length === 1 && (
-              <div className="flex w-full lg:flex-1 lg:ml-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg overflow-hidden">
+              <div className="flex w-full lg:flex-1 lg:ml-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md overflow-hidden">
                 <div className="flex gap-2 md:gap-3 items-center ml-4">
                   <div className="flex-shrink-0">
                     <div className="w-5 h-5 md:w-6 md:h-6 bg-green-100 dark:bg-green-800 rounded-full flex items-center justify-center">

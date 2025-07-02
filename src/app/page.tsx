@@ -72,25 +72,25 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12 stagger-children">
-              <div className="glass-effect rounded-2xl p-6 border border-white/20 hover-lift group">
+              <div className="glass-effect rounded-md p-6 border border-white/20 hover-lift group">
                 <Shield className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-pulse group-hover:animate-wiggle" />
                 <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-blue-300 transition-colors duration-300">Bảo mật cao</h3>
                 <p className="text-blue-100 text-sm">Hệ thống bảo mật đa lớp</p>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
               
-              <div className="glass-effect rounded-2xl p-6 border border-white/20 hover-lift group animation-delay-500">
+              <div className="glass-effect rounded-md p-6 border border-white/20 hover-lift group animation-delay-500">
                 <Gamepad2 className="w-12 h-12 text-purple-400 mx-auto mb-4 animate-float group-hover:animate-bounce" />
                 <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors duration-300">Quản lý game</h3>
                 <p className="text-blue-100 text-sm">Theo dõi tiến trình game</p>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
               
-              <div className="glass-effect rounded-2xl p-6 border border-white/20 hover-lift group animation-delay-1000">
+              <div className="glass-effect rounded-md p-6 border border-white/20 hover-lift group animation-delay-1000">
                 <Users className="w-12 h-12 text-green-400 mx-auto mb-4 animate-heartbeat group-hover:animate-wiggle" />
                 <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-green-300 transition-colors duration-300">Đa người dùng</h3>
                 <p className="text-blue-100 text-sm">Hỗ trợ nhiều tài khoản</p>
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
             </div>
           </div>

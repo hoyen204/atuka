@@ -19,8 +19,8 @@ const sizeMap = {
 
 const variantMap = {
   circular: 'rounded-full',
-  rounded: 'rounded-xl',
-  square: 'rounded-lg'
+  rounded: 'rounded-md',
+  square: 'rounded-md'
 };
 
 export default function CharacterImage({

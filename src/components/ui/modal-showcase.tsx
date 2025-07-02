@@ -114,7 +114,7 @@ export function ModalShowcase() {
                   </DialogHeader>
                   
                   <div className="py-4 space-y-4">
-                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-xl border border-blue-200/50 dark:border-blue-800/50">
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-md border border-blue-200/50 dark:border-blue-800/50">
                       <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
                         🎨 Đặc điểm hiệu ứng
                       </h4>
@@ -124,11 +124,11 @@ export function ModalShowcase() {
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md">
                         <div className="text-lg font-bold text-green-600">0.4s</div>
                         <div className="text-xs text-gray-600 dark:text-gray-400">Thời gian mở</div>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800/50 rounded-md">
                         <div className="text-lg font-bold text-purple-600">0.25s</div>
                         <div className="text-xs text-gray-600 dark:text-gray-400">Thời gian đóng</div>
                       </div>
@@ -150,7 +150,7 @@ export function ModalShowcase() {
         ))}
       </div>
 
-      <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-2xl border border-indigo-200/50 dark:border-indigo-800/50">
+      <div className="mt-8 p-6 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30 rounded-md border border-indigo-200/50 dark:border-indigo-800/50">
         <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-100 mb-3 flex items-center gap-2">
           💡 Hướng dẫn sử dụng
         </h3>

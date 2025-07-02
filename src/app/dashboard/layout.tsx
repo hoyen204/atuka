@@ -174,8 +174,8 @@ export default function DashboardLayout({
             </Button>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-lg blur-sm opacity-30" />
-                <div className="relative w-full h-full rounded-lg overflow-hidden border border-primary/20">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-md blur-sm opacity-30" />
+                <div className="relative w-full h-full rounded-md overflow-hidden border border-primary/20">
                   <Image
                     src="/character-profile.jpg"
                     alt="HH3D Logo"
@@ -255,8 +255,8 @@ export default function DashboardLayout({
           <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-800/50 dark:to-slate-700/50">
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-xl blur-md opacity-30" />
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden border-2 border-primary/20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-md blur-md opacity-30" />
+                <div className="relative w-12 h-12 rounded-md overflow-hidden border-2 border-primary/20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
                   <Image
                     src="/character-profile.jpg"
                     alt="HH3D Logo"
@@ -297,7 +297,7 @@ export default function DashboardLayout({
                 return (
                   <Link key={item.name} href={item.href}>
                     <div
-                      className={`group relative overflow-hidden rounded-xl transition-all duration-300 ${
+                      className={`group relative overflow-hidden rounded-md transition-all duration-300 ${
                         isActive
                           ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/25"
                           : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 text-slate-700 dark:text-slate-300 hover:text-primary"
@@ -308,7 +308,7 @@ export default function DashboardLayout({
                       )}
                       <div className="relative p-4 flex items-center gap-4">
                         <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                          className={`w-10 h-10 rounded-md flex items-center justify-center transition-all duration-200 ${
                             isActive
                               ? "bg-white/20"
                               : "bg-slate-100 dark:bg-slate-700 group-hover:bg-primary/10"

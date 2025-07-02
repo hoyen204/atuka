@@ -195,8 +195,8 @@ export default function DashboardPage() {
               <div className="space-y-4 animate-slide-in-left">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-lg opacity-30 animate-pulse-glow"></div>
-                    <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-2xl text-white animate-float">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md blur-lg opacity-30 animate-pulse-glow"></div>
+                    <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-md text-white animate-float">
                       <Sparkles className="w-8 h-8" />
                     </div>
                   </div>
@@ -247,7 +247,7 @@ export default function DashboardPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 opacity-90 animate-gradient-shift" />
                 <CardHeader className="relative text-white p-8">
                   <CardTitle className="text-2xl flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm animate-pulse-glow">
+                    <div className="w-12 h-12 bg-white/20 rounded-md flex items-center justify-center backdrop-blur-sm animate-pulse-glow">
                       <User className="w-6 h-6" />
                     </div>
                     Thông tin tài khoản
@@ -261,9 +261,9 @@ export default function DashboardPage() {
               <CardContent className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 stagger-children">
                   <div className="space-y-4">
-                    <div className="group p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
+                    <div className="group p-4 rounded-md hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center animate-pulse">
+                        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-md flex items-center justify-center animate-pulse">
                           <User className="w-4 h-4 text-blue-600" />
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Tên hiển thị</span>
@@ -271,9 +271,9 @@ export default function DashboardPage() {
                       <p className="text-xl font-semibold pl-11 animate-typewriter">{user.name}</p>
                     </div>
 
-                    <div className="group p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
+                    <div className="group p-4 rounded-md hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center animate-heartbeat">
+                        <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-md flex items-center justify-center animate-heartbeat">
                           <Phone className="w-4 h-4 text-green-600" />
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Zalo ID</span>
@@ -283,9 +283,9 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="group p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
+                    <div className="group p-4 rounded-md hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center animate-float">
+                        <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/50 rounded-md flex items-center justify-center animate-float">
                           <Mail className="w-4 h-4 text-purple-600" />
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Email</span>
@@ -293,9 +293,9 @@ export default function DashboardPage() {
                       <p className="text-xl font-semibold pl-11">{user.email || "Chưa cập nhật"}</p>
                     </div>
 
-                    <div className="group p-4 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
+                    <div className="group p-4 rounded-md hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 border border-transparent hover:border-blue-200 dark:hover:border-slate-600 hover-lift">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex items-center justify-center animate-pulse-glow">
+                        <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/50 rounded-md flex items-center justify-center animate-pulse-glow">
                           <Shield className="w-4 h-4 text-amber-600" />
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">Loại License</span>
@@ -315,9 +315,9 @@ export default function DashboardPage() {
                 </div>
 
                 {user.license_expired && (
-                  <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800 animate-glow-border hover-lift">
+                  <div className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-md border border-amber-200 dark:border-amber-800 animate-glow-border hover-lift">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-xl flex items-center justify-center animate-wiggle">
+                      <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-md flex items-center justify-center animate-wiggle">
                         <Clock className="w-5 h-5 text-amber-600" />
                       </div>
                       <div>

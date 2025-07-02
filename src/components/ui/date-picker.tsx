@@ -49,7 +49,7 @@ export function PeriodSelector({ value, onChange, className = "" }: PeriodSelect
   ]
 
   return (
-    <div className={`flex space-x-1 bg-gray-100 rounded-lg p-1 ${className}`}>
+    <div className={`flex space-x-1 bg-gray-100 rounded-md p-1 ${className}`}>
       {periods.map((period) => (
         <button
           key={period.value}
