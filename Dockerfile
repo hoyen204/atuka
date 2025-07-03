@@ -1,45 +1,68 @@
-# Stage 1: Build
-FROM oven/bun:latest AS builder
+# Ultra-lightweight multi-stage build for Next.js
+FROM node:18-alpine AS base
 
-# Set working directory
+# Install only essential dependencies
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package.json và bun.lockb (nếu có)
-COPY package.json bun.lock* ./
-COPY prisma ./prisma
+# Dependencies installer stage - skip postinstall
+FROM base AS deps
+# Copy package files
+COPY package.json package-lock.json* ./
 
-# Cài dependencies với Bun, bỏ qua lockfile nếu lỗi
-RUN bun install --no-verify
+# Install production dependencies only, skip postinstall scripts
+RUN npm ci --omit=dev --omit=optional --no-audit --no-fund --ignore-scripts && \
+    npm cache clean --force
 
-# Copy toàn bộ mã nguồn (bao gồm prisma)
+# Builder stage - use Debian for better compatibility
+FROM node:18-slim AS builder
+WORKDIR /app
+
+# Copy package files and source code first
+COPY package.json package-lock.json* ./
 COPY . .
 
-# Build Next.js app
-RUN bun run build
+# Add build arg and env for Prisma
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
 
-# Stage 2: Runtime
-FROM oven/bun:latest AS runner
+# Install all dependencies for building (with postinstall working now)
+RUN npm ci --no-audit --no-fund
 
-# Set working directory
+# Generate Prisma client (lightweight)
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Build Next.js (standalone mode)
+ENV NODE_ENV=production
+RUN npm run build && \
+    npm cache clean --force
+
+# Ultra-lightweight production stage with distroless
+FROM gcr.io/distroless/nodejs18-debian11 AS runner
+
 WORKDIR /app
 
-# Copy file cần thiết từ builder
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/bun.lock* ./
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts* ./
-COPY --from=builder /app/next.config.ts* ./
-
-# Cài dependencies production
-RUN bun install
-
-# Biến môi trường
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-# Mở port
+# Copy only production node_modules (without build tools)
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copy built Next.js standalone app
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Copy only essential Prisma runtime files (not CLI)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+
+# Use non-root user (distroless already provides this)
+USER 65534
+
 EXPOSE 3000
 
-# Chạy app với Bun
-CMD ["bun", "run", "start"]
+# Run the standalone server
+CMD ["server.js"]

@@ -1,7 +1,7 @@
 services:
   hh3d_van_dap:
     build: .
-    image: dakmil204/hh3d_van_dap:latest
+    image: dakmil204/hh3d_van_dap:optimized
     container_name: hh3d_van_dap
     restart: unless-stopped
     ports:

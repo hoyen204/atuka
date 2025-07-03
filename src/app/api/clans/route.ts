@@ -14,6 +14,8 @@ async function getClanHandler(request: Request) {
   const page = parseInt(searchParams.get('page') || '1');
   const pageSize = parseInt(searchParams.get('pageSize') || '10');
   const search = searchParams.get('search') || '';
+  const sort = searchParams.get('sort') || 'name';
+  const order = searchParams.get('order') || 'asc';
 
   try {
     const startTime = Date.now();
@@ -34,7 +36,7 @@ async function getClanHandler(request: Request) {
         where,
         skip,
         take: pageSize,
-        orderBy: { name: 'asc' }
+        orderBy: { [sort]: order }
       }),
       prisma.clan.count({ where })
     ]);
@@ -68,7 +70,7 @@ async function getClanHandler(request: Request) {
     });
 
     // Create a lookup map for O(1) access
-    const activeMembersMap = activeMembersData.reduce((acc, item) => {
+    const activeMembersMap = activeMembersData.reduce((acc: Record<string, number>, item: { clanId: string; _count: { id: number } }) => {
       acc[item.clanId || ''] = item._count.id;
       return acc;
     }, {} as Record<string, number>);

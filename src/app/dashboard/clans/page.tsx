@@ -29,7 +29,15 @@ import {
 } from "@/components/ui/tooltip";
 import { useResponsive } from "@/hooks/useResponsive";
 import { ClanDTO, ClansResponse } from "@/models/types";
-import { Crown, Search, Shield, UserCheck } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Crown,
+  Search,
+  Shield,
+  UserCheck,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function ClanManagementPage() {
@@ -42,15 +50,25 @@ export default function ClanManagementPage() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [searchInput, setSearchInput] = useState<string>("");
   const [isCompactView, setIsCompactView] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { isMobile, isTablet, currentBreakpoint } = useResponsive();
 
   const fetchClans = useCallback(
-    async (pageNum: number, search: string, size: number) => {
+    async (
+      pageNum: number,
+      search: string,
+      size: number,
+      sort: string,
+      order: string
+    ) => {
       setLoading(true);
       try {
         const params = new URLSearchParams({
           page: pageNum.toString(),
           pageSize: size.toString(),
+          sort: sort,
+          order: order,
           ...(search && { search }),
         });
 
@@ -70,8 +88,8 @@ export default function ClanManagementPage() {
   );
 
   useEffect(() => {
-    fetchClans(page, searchTerm, pageSize);
-  }, [page, searchTerm, pageSize, fetchClans]);
+    fetchClans(page, searchTerm, pageSize, sortBy, sortOrder);
+  }, [page, searchTerm, pageSize, sortBy, sortOrder, fetchClans]);
 
   // Auto set compact view on mobile/tablet
   useEffect(() => {
@@ -97,17 +115,109 @@ export default function ClanManagementPage() {
     setPage(1);
   };
 
-  const getLevelBadgeVariant = (level: number) => {
-    if (level >= 50) return "default";
-    if (level >= 25) return "secondary";
-    return "outline";
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("asc");
+    }
+    setPage(1);
   };
 
-  const getMembersBadgeVariant = (current: number, limit: number) => {
-    const ratio = current / limit;
-    if (ratio >= 0.9) return "destructive";
-    if (ratio >= 0.7) return "secondary";
-    return "default";
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return <ArrowUpDown className="w-4 h-4 text-muted-foreground" />;
+    }
+    return sortOrder === "asc" ? (
+      <ArrowUp className="w-4 h-4 text-primary" />
+    ) : (
+      <ArrowDown className="w-4 h-4 text-primary" />
+    );
+  };
+
+  const getLevelBadgeVariant = (level: number) => {
+    if (level == 8)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-purple-800 to-cyan-800 hover:from-purple-900 hover:to-cyan-900 text-white shadow-lg border-0",
+      };
+    if (level == 7)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-indigo-700 to-purple-800 hover:from-indigo-800 hover:to-purple-900 text-white shadow-md border-0",
+      };
+    if (level == 6)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white shadow-md border-0",
+      };
+    if (level == 5)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-emerald-700 to-green-700 hover:from-emerald-800 hover:to-green-800 text-white shadow-md border-0",
+      };
+    if (level == 4)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white shadow-md border-0",
+      };
+    if (level == 3)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-md border-0",
+      };
+    if (level == 2)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-red-600 to-cyan-600 hover:from-red-700 hover:to-cyan-700 text-white shadow-md border-0",
+      };
+    if (level == 1)
+      return {
+        variant: "default" as const,
+        className:
+          "bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-sm border-0",
+      };
+    return {
+      variant: "outline" as const,
+      className:
+        "border-2 border-gray-400 text-gray-600 hover:border-gray-500 hover:text-gray-700 bg-gray-50",
+    };
+  };
+
+  const getLevelTextColor = (level: number) => {
+    if (level == 8) return "text-purple-800 group-hover:text-purple-900";
+    if (level == 7) return "text-indigo-800 group-hover:text-indigo-900";
+    if (level == 6) return "text-blue-800 group-hover:text-blue-900";
+    if (level == 5) return "text-emerald-800 group-hover:text-emerald-900";
+    if (level == 4) return "text-orange-700 group-hover:text-orange-800";
+    if (level == 3) return "text-red-700 group-hover:text-red-800";
+    if (level == 2) return "text-cyan-700 group-hover:text-cyan-800";
+    if (level == 1) return "text-gray-700 group-hover:text-gray-800";
+    return "text-gray-600 group-hover:text-gray-700";
+  };
+
+  const getLevelIconColor = (level: number) => {
+    if (level == 8) return "text-purple-800 hover:text-purple-900";
+    if (level == 7) return "text-indigo-800 hover:text-indigo-900";
+    if (level == 6) return "text-blue-800 hover:text-blue-900";
+    if (level == 5) return "text-emerald-800 hover:text-emerald-900";
+    if (level == 4) return "text-orange-700 hover:text-orange-800";
+    if (level == 3) return "text-red-700 hover:text-red-800";
+    if (level == 2) return "text-cyan-700 hover:text-cyan-800";
+    if (level == 1) return "text-gray-700 hover:text-gray-800";
+    return "text-gray-600 hover:text-gray-700";
+  };
+
+  const getMembersBadgeVariant = () => {
+    return "secondary";
   };
 
   const getActiveClansCount = () => {
@@ -159,6 +269,28 @@ export default function ClanManagementPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
+                      variant={sortBy === "level" ? "default" : "outline"}
+                      onClick={() => handleSort("level")}
+                      className="flex items-center gap-2 hover:gap-3 transition-all duration-200"
+                    >
+                      {getSortIcon("level")}
+                      Level
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Sắp xếp theo cấp tông{" "}
+                      {sortBy === "level"
+                        ? sortOrder === "asc"
+                          ? "tăng dần"
+                          : "giảm dần"
+                        : ""}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
                       variant={isCompactView ? "default" : "outline"}
                       onClick={() => setIsCompactView(!isCompactView)}
                       className="h-10 px-4"
@@ -201,7 +333,14 @@ export default function ClanManagementPage() {
                 </div>
               </div>
               <div className="text-xs text-gray-500">
-                Chế độ hiển thị: {isCompactView ? "Thu gọn" : "Mở rộng"}
+                Sắp xếp:{" "}
+                {sortBy === "level"
+                  ? "Cấp tông"
+                  : sortBy === "name"
+                  ? "Tên"
+                  : "Mặc định"}{" "}
+                {sortOrder === "asc" ? "↑" : "↓"} | Chế độ:{" "}
+                {isCompactView ? "Thu gọn" : "Mở rộng"}
               </div>
             </div>
 
@@ -230,12 +369,22 @@ export default function ClanManagementPage() {
                     <Table className={isCompactView ? "text-sm" : ""}>
                       <TableHeader className="sticky top-0 bg-white z-10">
                         <TableRow className="hover:bg-transparent">
+                          <TableHead className="font-semibold w-16">
+                            STT
+                          </TableHead>
                           <TableHead className="font-semibold">ID</TableHead>
                           <TableHead className="font-semibold">
                             Tông môn
                           </TableHead>
                           <TableHead className="font-semibold">
-                            Cấp tông
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort("level")}
+                              className="flex items-center gap-2 h-auto p-0 font-semibold hover:bg-transparent"
+                            >
+                              Cấp tông
+                              {getSortIcon("level")}
+                            </Button>
                           </TableHead>
                           <TableHead className="font-semibold">
                             Bang chủ
@@ -252,124 +401,147 @@ export default function ClanManagementPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {clans.map((clan) => (
-                          <TableRow
-                            key={clan.id}
-                            className={`hover:bg-accent/50 transition-all duration-200 hover:shadow-sm group ${
-                              isCompactView ? "h-12" : ""
-                            }`}
-                          >
-                            <TableCell
-                              className={`font-medium group-hover:text-primary transition-colors ${
-                                isCompactView ? "py-2" : ""
-                              } hover:cursor-pointer`}
-                              onClick={() => {
-                                navigator.clipboard?.writeText &&
-                                  navigator.clipboard.writeText(
-                                    clan.id.toString()
-                                  );
-                                toast({
-                                  title: "Thành công",
-                                  description: "Đã copy ID tông môn",
-                                  type: "success",
-                                });
-                              }}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-primary" />
-                                {clan.id}
-                              </div>
-                            </TableCell>
-                            <TableCell
-                              className={`font-medium group-hover:text-primary transition-colors ${
-                                isCompactView ? "py-2" : ""
+                        {clans.map((clan, index) => {
+                                                      const levelBadgeConfig = getLevelBadgeVariant(
+                              clan.level
+                            );
+                            const levelTextColor = getLevelTextColor(clan.level);
+                            const levelIconColor = getLevelIconColor(clan.level);
+                            const stt = (page - 1) * pageSize + index + 1;
+                          return (
+                            <TableRow
+                              key={clan.id}
+                              className={`hover:bg-accent/50 transition-all duration-200 hover:shadow-sm group ${
+                                isCompactView ? "h-12" : ""
                               }`}
                             >
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-4 h-4 text-primary" />
-                                {clan.name}
-                              </div>
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <Badge variant={getLevelBadgeVariant(clan.level)}>
-                                Level {clan.level}
-                              </Badge>
-                            </TableCell>
-                            <TableCell
-                              className={`text-muted-foreground group-hover:text-foreground transition-colors ${
-                                isCompactView ? "py-2" : ""
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Crown className="w-4 h-4 text-yellow-500" />
-                                {clan.leader}
-                              </div>
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge
-                                    variant={getMembersBadgeVariant(
-                                      clan.memberCount,
-                                      clan.memberLimit
-                                    )}
-                                  >
-                                    {clan.memberCount}/{clan.memberLimit}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>
-                                    {clan.memberCount} thành viên hiện tại /{" "}
-                                    {clan.memberLimit} tối đa
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <div className="flex items-center gap-2">
-                                <UserCheck className="w-4 h-4 text-green-500" />
-                                <span
-                                  className={
-                                    isCompactView ? "text-xs" : "text-sm"
-                                  }
-                                >
-                                  {clan.activeMembers} hoạt động
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <div className="w-full bg-secondary rounded-full h-2">
-                                <div
-                                  className={`h-2 rounded-full transition-all duration-300 ${
-                                    clan.memberCount / clan.memberLimit >= 0.9
-                                      ? "bg-destructive"
-                                      : clan.memberCount / clan.memberLimit >=
-                                        0.7
-                                      ? "bg-orange-500"
-                                      : "bg-primary"
-                                  }`}
-                                  style={{
-                                    width: `${Math.min(
-                                      100,
-                                      (clan.memberCount / clan.memberLimit) *
-                                        100
-                                    )}%`,
-                                  }}
-                                />
-                              </div>
-                              <span
-                                className={`text-muted-foreground mt-1 block ${
-                                  isCompactView ? "text-[10px]" : "text-xs"
+                              <TableCell
+                                className={`text-center font-medium text-muted-foreground ${
+                                  isCompactView ? "py-2" : ""
                                 }`}
                               >
-                                {Math.round(
-                                  (clan.memberCount / clan.memberLimit) * 100
-                                )}
-                                %
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                                <span className="text-sm font-mono">{stt}</span>
+                              </TableCell>
+                              <TableCell
+                                className={`font-medium group-hover:text-primary transition-colors ${
+                                  isCompactView ? "py-2" : ""
+                                } hover:cursor-pointer`}
+                                onClick={() => {
+                                  navigator.clipboard?.writeText &&
+                                    navigator.clipboard.writeText(
+                                      clan.id.toString()
+                                    );
+                                  toast({
+                                    title: "Thành công",
+                                    description: "Đã copy ID tông môn",
+                                    type: "success",
+                                  });
+                                }}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-4 h-4 text-primary" />
+                                  {clan.id}
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={`font-medium transition-colors ${
+                                  isCompactView ? "py-2" : ""
+                                } ${levelTextColor}`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Shield className={`w-4 h-4 ${levelIconColor}`} />
+                                  {clan.name}
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <Badge
+                                  variant={levelBadgeConfig.variant}
+                                  className={`${levelBadgeConfig.className} transition-colors`}
+                                >
+                                  Level {clan.level}
+                                </Badge>
+                              </TableCell>
+                              <TableCell
+                                className={`text-muted-foreground group-hover:text-foreground transition-colors ${
+                                  isCompactView ? "py-2" : ""
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Crown className="w-4 h-4 text-yellow-500" />
+                                  {clan.leader}
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Badge
+                                      variant="secondary"
+                                    >
+                                      {clan.memberCount}/{clan.memberLimit}
+                                    </Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>
+                                      {clan.memberCount} thành viên /{" "}
+                                      {clan.memberLimit} tối đa
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <UserCheck className="w-4 h-4 text-green-500" />
+                                  <span
+                                    className={
+                                      isCompactView ? "text-xs" : "text-sm"
+                                    }
+                                  >
+                                    {clan.activeMembers} hoạt động
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <div className="w-full bg-secondary rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full transition-all duration-300 ${
+                                      clan.memberCount / clan.memberLimit >= 0.9
+                                        ? "bg-destructive"
+                                        : clan.memberCount / clan.memberLimit >=
+                                          0.7
+                                        ? "bg-orange-500"
+                                        : "bg-primary"
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(
+                                        100,
+                                        (clan.memberCount / clan.memberLimit) *
+                                          100
+                                      )}%`,
+                                    }}
+                                  />
+                                </div>
+                                <span
+                                  className={`text-muted-foreground mt-1 block ${
+                                    isCompactView ? "text-[10px]" : "text-xs"
+                                  }`}
+                                >
+                                  {Math.round(
+                                    (clan.memberCount / clan.memberLimit) * 100
+                                  )}
+                                  %
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       </TableBody>
                     </Table>
                   </div>
