@@ -26,7 +26,8 @@ import {
   Shield,
   UserCheck,
   Users,
-  X
+  X,
+  Zap
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -101,6 +102,12 @@ export default function DashboardLayout({
       href: "/dashboard/accounts",
       icon: UserCheck,
       description: "Quản lý tài khoản",
+    },
+    {
+      name: "Thiên Đạo Ban Thưởng",
+      href: "/dashboard/thien-dao-ban-thuong",
+      icon: Zap,
+      description: "Tự động nhận phần thưởng",
     },
     {
       name: "Clans Management",

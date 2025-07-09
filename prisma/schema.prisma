@@ -54,7 +54,7 @@ model Account {
   secretKey             String?   @map("secretKey") @db.VarChar(255)
   birthday              String?   @db.VarChar(255)
   username              String?   @db.VarChar(255)
-  accountPassword       String?   @map("accountPassword") @db.VarChar(255)
+  password              String?   @map("password") @db.VarChar(255)
   proxy                 String?   @db.VarChar(255)
   email                 String?   @db.VarChar(255)
   autoElement           Boolean?  @default(true) @map("autoElement")
