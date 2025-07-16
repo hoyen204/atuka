@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
-import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import * as cheerio from "cheerio";
 import { randomInt } from "crypto";
 import { extractRewards, extractNonces, Reward } from "@/lib/reward-extractor";
+import ApiRequestService from "@/app/services/ApiService";
 
 interface RewardInfo {
   rewards: Reward[];
@@ -22,36 +21,15 @@ interface PageInfo {
   error?: string;
 }
 
-async function createProxyAgent(proxyString?: string) {
-  if (!proxyString) return undefined;
-  
-  try {
-    const proxyUrl = proxyString.startsWith('http') ? proxyString : `http://${proxyString}`;
-    return new HttpsProxyAgent(proxyUrl);
-  } catch (error) {
-    console.error('Error creating proxy agent:', error);
-    return undefined;
-  }
-}
-
 async function fetchWithProxy(url: string, cookie: string, proxy?: string): Promise<string> {
-  const agent = await createProxyAgent(proxy);
   
   const config: any = {
-    method: 'GET',
-    url: url,
     headers: {
       'cookie': cookie,
-      'user-agent': 'YYY'
     },
-    timeout: 30000
   };
   
-//   if (agent) {
-//     config.httpsAgent = agent;
-//   }
-  
-  const response = await axios(config);
+  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
   return response.data;
 }
 
@@ -75,7 +53,6 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
     });
   }
   
-  const agent = proxy ? new HttpsProxyAgent(proxy) : undefined;
   const config = {
     method: 'POST',
     url: `${baseUrl}/wp-admin/admin-ajax.php`,
@@ -84,22 +61,13 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
       'cookie': cookie,
       'origin': baseUrl,
       'referer': `${baseUrl}/thien-dao-ban-thuong`,
-      'user-agent': 'VLXX',
     },
     data: postData,
     timeout: 15000,
   };
 
   try {
-    const response = await axios.post(
-      config.url,
-      config.data,
-      {
-        headers: config.headers,
-        httpsAgent: agent,
-        timeout: config.timeout
-      }
-    );
+    const response = await ApiRequestService.gI().requestWithRetry(config.url, config, proxy);
     return { success: true, data: response.data };
   } catch (error: any) {
     const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;

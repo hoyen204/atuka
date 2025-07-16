@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,12 +29,15 @@ export async function GET(request: NextRequest) {
     };
 
     const [proxies, total] = await Promise.all([
-      prisma.proxy.findMany({
+      prisma.deletedProxy.findMany({
         where,
         skip,
-        take: limit
+        take: limit,
+        orderBy: {
+          createdAt: "desc"
+        }
       }),
-      prisma.proxy.count({ where })
+      prisma.deletedProxy.count({ where })
     ]);
 
     return NextResponse.json({
@@ -53,52 +56,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { host, port, username, password, enabled = true } = body;
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
 
-    if (!host || !port) {
-      return NextResponse.json({ error: "Host and port are required" }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
-    if (port < 1 || port > 65535) {
-      return NextResponse.json({ error: "Port must be between 1 and 65535" }, { status: 400 });
-    }
-
-    const existingProxy = await prisma.proxy.findFirst({
-      where: {
-        host,
-        port: parseInt(port),
-        creatorId: session.user.zalo_id
-      }
+    const deletedProxy = await prisma.deletedProxy.delete({
+      where: { id: parseInt(id) }
     });
 
-    if (existingProxy) {
-      return NextResponse.json({ error: "Proxy already exists" }, { status: 409 });
-    }
-
-    const proxy = await prisma.proxy.create({
-      data: {
-        host,
-        port: parseInt(port),
-        username: username || null,
-        password: password || null,
-        enabled: Boolean(enabled),
-        creatorId: session.user.zalo_id
-      }
-    });
-
-    return NextResponse.json({ proxy }, { status: 201 });
-
+    return NextResponse.json({ deletedProxy }, { status: 200 });
   } catch (error) {
-    console.error("Error creating proxy:", error);
+    console.error("Error deleting proxy:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-} 
+}

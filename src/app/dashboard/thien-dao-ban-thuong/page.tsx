@@ -31,7 +31,6 @@ import {
 import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 import { useToast } from "@/hooks/useToast";
 import { Reward } from "@/lib/reward-extractor";
-import axios from "axios";
 import {
   AlertCircle,
   Award,
@@ -120,15 +119,16 @@ const ThienDaoBanThuongPage = () => {
       if (currentPage > 1) {
         params.set("cursor", accounts[accounts.length - 1].id.toString());
       }
-      const res = await axios.get(`/api/accounts?${params.toString()}`);
-      if (res.data && Array.isArray(res.data.accounts)) {
-        setAccounts(res.data.accounts);
-        setTotalAccounts(res.data.total);
+      const res = await fetch(`/api/accounts?${params.toString()}`);
+      const data = await res.json();
+      if (data && Array.isArray(data.accounts)) {
+        setAccounts(data.accounts);
+        setTotalAccounts(data.total);
       } else {
         setAccounts([]); // Set to empty array on failure
         console.error(
           "Failed to fetch accounts or data is not an array:",
-          res.data
+          data
         );
       }
     } catch (error) {
@@ -147,16 +147,20 @@ const ThienDaoBanThuongPage = () => {
     if (accounts.length === 0) return;
     setLoading(true, "Đang kiểm tra trạng thái phần thưởng...");
     try {
-      const response = await axios.post("/api/thien-dao-ban-thuong/status", {
-        accountIds: accounts.map((a) => a.id),
+      const response = await fetch("/api/thien-dao-ban-thuong/status", {
+        method: "POST",
+        body: JSON.stringify({
+          accountIds: accounts.map((a) => a.id),
+        }),
       });
-      if (response.data.success && Array.isArray(response.data.data)) {
-        setAccountStatuses(response.data.data);
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setAccountStatuses(data.data);
       } else {
         setAccountStatuses([]);
         console.error(
           "Failed to fetch statuses or data is not an array:",
-          response.data
+          data
         );
       }
     } catch (error) {
@@ -170,6 +174,33 @@ const ThienDaoBanThuongPage = () => {
       setLoading(false);
     }
   }, [accounts, setLoading, toast]);
+
+  const fetchSingleAccountStatus = useCallback(async (accountId: number) => {
+    try {
+      const response = await fetch("/api/thien-dao-ban-thuong/status", {
+        method: "POST",
+        body: JSON.stringify({
+          accountIds: [accountId],
+        }),
+      });
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+        const updatedAccountStatus = data.data[0];
+        setAccountStatuses(prev => 
+          prev.map(acc => 
+            acc.accountId === accountId ? updatedAccountStatus : acc
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching single account status:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật trạng thái tài khoản.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   useEffect(() => {
     fetchAccounts();
@@ -233,21 +264,22 @@ const ThienDaoBanThuongPage = () => {
       `Đang tải phần thưởng cho ${accountStatus.accountName}...`
     );
     try {
-      const res = await axios.get(
+      const res = await fetch(
         `/api/thien-dao-ban-thuong?accountId=${accountId}`
       );
-      if (res.data.success) {
+      const data = await res.json();
+      if (data.success) {
         const fullAccountStatus = {
           ...accountStatus,
-          rewards: res.data.data.rewards,
+          rewards: data.data.rewards,
         };
         setSelectedAccountForModal(fullAccountStatus);
-        setNonces(res.data.data.nonces);
+        setNonces(data.data.nonces);
         setIsModalOpen(true);
       } else {
         toast({
           title: "Lỗi",
-          description: res.data.error || "Không thể lấy danh sách phần thưởng.",
+          description: data.error || "Không thể lấy danh sách phần thưởng.",
           variant: "destructive",
         });
       }
@@ -279,28 +311,31 @@ const ThienDaoBanThuongPage = () => {
 
     setLoading(true, "Đang nhận phần thưởng...");
     try {
-      const res = await axios.post("/api/thien-dao-ban-thuong", {
+      const res = await fetch("/api/thien-dao-ban-thuong", {
+        method: "POST",
+        body: JSON.stringify({
         accountId,
         rewardId,
         rewardType,
         nonce,
+        }),
       });
-
-      if (res.data.success) {
+      const data = await res.json();
+      if (data.success) {
         toast({
           title: "Thành công",
           description:
-            res.data.data?.message || "Đã nhận phần thưởng thành công.",
+            data.data?.message || "Đã nhận phần thưởng thành công.",
         });
 
         if (isModalOpen && selectedAccountForModal?.accountId === accountId) {
           await openRewardsModal(accountId);
         }
-        await fetchAccountStatuses();
+        await fetchSingleAccountStatus(accountId);
       } else {
         toast({
           title: "Thất bại",
-          description: res.data.data?.message || `Không thể nhận phần thưởng.`,
+          description: data.data?.message || `Không thể nhận phần thưởng.`,
           variant: "destructive",
         });
       }
@@ -328,16 +363,19 @@ const ThienDaoBanThuongPage = () => {
       const payload = accountId
         ? { accountIds: [accountId] }
         : { allAccounts: true };
-      const res = await axios.post("/api/thien-dao-ban-thuong/batch", payload);
-
-      if (res.data.success && Array.isArray(res.data.data)) {
-        setBatchResults(res.data.data);
+      const res = await fetch("/api/thien-dao-ban-thuong/batch", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setBatchResults(data.data);
       } else {
         setBatchResults([]);
-        console.error("Batch claim failed or data is not an array:", res.data);
+        console.error("Batch claim failed or data is not an array:", data);
         toast({
           title: "Lỗi Batch Claim",
-          description: res.data.error || "Dữ liệu trả về không hợp lệ.",
+          description: data.error || "Dữ liệu trả về không hợp lệ.",
           variant: "destructive",
         });
       }
@@ -350,8 +388,11 @@ const ThienDaoBanThuongPage = () => {
       });
     } finally {
       setIsBatchLoading(false);
-      // Refresh data after batch claim
-      fetchAccountStatuses();
+      if (accountId) {
+        await fetchSingleAccountStatus(accountId);
+      } else {
+        await fetchAccountStatuses();
+      }
     }
   };
 

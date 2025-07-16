@@ -27,7 +27,9 @@ import {
   UserCheck,
   Users,
   X,
-  Zap
+  Zap,
+  Trash2,
+  TestTube
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -104,10 +106,10 @@ export default function DashboardLayout({
       description: "Quản lý tài khoản",
     },
     {
-      name: "Thiên Đạo Ban Thưởng",
+      name: "Thiên Đạo Ban Thuởng",
       href: "/dashboard/thien-dao-ban-thuong",
-      icon: Zap,
-      description: "Tự động nhận phần thưởng",
+      icon: Gift,
+      description: "Quản lý thiên đạo ban thuởng",
     },
     {
       name: "Clans Management",
@@ -117,9 +119,21 @@ export default function DashboardLayout({
     },
     {
       name: "Proxy Management",
-      href: "/dashboard/proxies",
+      href: "/dashboard/proxy",
       icon: Server,
       description: "Quản lý proxy",
+    },
+    {
+      name: "Deleted Proxies",
+      href: "/dashboard/proxy/deleted",
+      icon: Trash2,
+      description: "Proxy đã xóa",
+    },
+    {
+      name: "Proxy Checker",
+      href: "/dashboard/proxy/checker",
+      icon: TestTube,
+      description: "Kiểm tra proxy",
     },
     {
       name: "Wedding Reports",
@@ -152,6 +166,9 @@ export default function DashboardLayout({
   const isActivePath = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard";
+    }
+    if (href === "/dashboard/proxy") {
+      return pathname === "/dashboard/proxy";
     }
     return pathname.startsWith(href);
   };

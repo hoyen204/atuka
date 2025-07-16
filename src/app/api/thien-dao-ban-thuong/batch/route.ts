@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
-import axios from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import * as cheerio from "cheerio";
 import { extractRewards, extractNonces } from "@/lib/reward-extractor";
+import ApiRequestService from "@/app/services/ApiService";
 
 interface ClaimDetail {
   id: string;
@@ -26,20 +25,7 @@ interface ClaimResult {
   error: string | null;
 }
 
-async function createProxyAgent(proxyString?: string) {
-  if (!proxyString) return undefined;
-  
-  try {
-    const proxyUrl = proxyString.startsWith('http') ? proxyString : `http://${proxyString}`;
-    return new HttpsProxyAgent(proxyUrl);
-  } catch (error) {
-    console.error('Error creating proxy agent:', error);
-    return undefined;
-  }
-}
-
 async function fetchPageContent(url: string, cookie: string, proxy?: string): Promise<string> {
-  const agent = await createProxyAgent(proxy);
   
   const config: any = {
     method: 'GET',
@@ -51,16 +37,11 @@ async function fetchPageContent(url: string, cookie: string, proxy?: string): Pr
     timeout: 30000
   };
   
-//   if (agent) {
-//     config.httpsAgent = agent;
-//   }
-  
-  const response = await axios(config);
+  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
   return response.data;
 }
 
 async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, proxy?: string, rewardType: string = 'normal') {
-  const agent = await createProxyAgent(proxy);
   
   let postData;
   if (rewardType === 'anniversary' || rewardId === 'anniversary_reward') {
@@ -89,20 +70,13 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
       "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
       cookie: cookie,
       referer: `${baseUrl}/thien-dao-ban-thuong`,
-      "user-agent": "XXX",
     },
     data: postData,
-    timeout: 30000,
   };
-  
-//   if (agent) {
-//     config.httpsAgent = agent;
-//   }
-  
+
+  const url = `${baseUrl}/wp-admin/admin-ajax.php`;
   try {
-    const response = await axios.request(
-      config
-    );
+    const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
     return { success: true, data: response.data };
   } catch (error: any) {
     const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;

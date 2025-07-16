@@ -1,11 +1,11 @@
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 import { extractRewards } from "@/lib/reward-extractor";
-import axios from "axios";
 import { randomInt } from "crypto";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import ApiRequestService from "@/app/services/ApiService";
 
 interface AccountStatus {
   accountId: number;
@@ -27,42 +27,18 @@ interface RewardStatus {
   type?: string;
 }
 
-async function createProxyAgent(proxyString?: string) {
-  if (!proxyString) return undefined;
-
-  try {
-    const proxyUrl = proxyString.startsWith("http")
-      ? proxyString
-      : `http://${proxyString}`;
-    return new HttpsProxyAgent(proxyUrl);
-  } catch (error) {
-    console.error("Error creating proxy agent:", error);
-    return undefined;
-  }
-}
-
 async function fetchPageContent(
   url: string,
   cookie: string,
   proxy?: string
 ): Promise<string> {
-  const agent = await createProxyAgent(proxy);
-
   const config: any = {
-    method: "GET",
-    url: url,
     headers: {
       cookie: cookie,
-      "user-agent": "XXX",
     },
-    timeout: 30000,
   };
 
-  //   if (agent) {
-  //     config.httpsAgent = agent;
-  //   }
-
-  const response = await axios(config);
+  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
   return response.data;
 }
 

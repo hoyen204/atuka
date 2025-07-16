@@ -27,6 +27,7 @@ model User {
   // Relations
   accounts              Account[]
   proxies               Proxy[]
+  deletedProxies        DeletedProxy[]
 
   @@map("users")
   @@index([zaloId])
@@ -70,7 +71,6 @@ model Account {
 
   // Relations
   creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
-  dailyActivities       AccountDailyActivity[]
   weddingReceived       WeddingReceived[]
 
   @@map("accounts")
@@ -78,24 +78,6 @@ model Account {
   @@index([securityUpdatedAt])
   @@index([cultivation])
   @@index([creatorId])
-}
-
-// Account daily activities tracking
-model AccountDailyActivity {
-  id                    Int       @id @default(autoincrement())
-  accountId             Int       @map("account_id")
-  progress              Int?
-  totalCultivation      Int?      @map("total_cultivation")
-  totalGem              Int?      @map("total_gem")
-  detail                Json?
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-
-  // Relations
-  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
-  @@map("account_daily_activities")
-  @@index([accountId])
 }
 
 // Clan questions for automation
@@ -142,15 +124,6 @@ model Config {
   @@map("configs")
 }
 
-// HH3D member information
-model Hh3dMember {
-  id                    Int       @id
-  name                  String    @db.VarChar(255)
-  tuVi                  Int?      @map("tu_vi")
-
-  @@map("hh3d_members")
-}
-
 // Mine locations
 model Mine {
   id                    Int       @id
@@ -172,13 +145,28 @@ model Proxy {
   password              String?   @db.VarChar(255)
   enabled               Boolean   @default(true)
   creatorId             String    @map("creator_id") @db.VarChar(255)
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   // Relations
   creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
 
   @@map("proxies")
+  @@index([creatorId])
+}
+
+model DeletedProxy {
+  id                    Int       @id @default(autoincrement())
+  host                  String    @db.VarChar(255)
+  port                  Int
+  username              String?   @db.VarChar(255)
+  password              String?   @db.VarChar(255)
+  enabled               Boolean   @default(true)
+  creatorId             String    @map("creator_id") @db.VarChar(255)
+  createdAt             DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
+
+  @@map("deleted_proxies")
   @@index([creatorId])
 }
 

@@ -9,20 +9,24 @@ import { useResponsive } from "@/hooks/useResponsive";
 import {
   Plus,
   Search,
-  Edit,
   Trash2,
   Server,
   Eye,
   EyeOff,
   TestTube,
   Loader2,
-  CheckCircle,
-  XCircle,
   Globe,
   Shield,
-  Clock
+  Copy,
+  ChevronDown
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +41,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Proxy {
   id: number;
@@ -86,6 +96,8 @@ export default function ProxiesPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [testing, setTesting] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (isMounted && !isLoading && !isAuthenticated) {
@@ -236,6 +248,7 @@ export default function ProxiesPage() {
   const handleDelete = async (proxy: Proxy) => {
     if (!confirm(`Bạn có chắc muốn xóa proxy ${proxy.host}:${proxy.port}?`)) return;
 
+    setDeleting(true);
     try {
       await api.delete(`/api/proxies/${proxy.id}`, {
         loadingText: "Đang xóa proxy..."
@@ -254,6 +267,8 @@ export default function ProxiesPage() {
         variant: "destructive",
         type: "error"
       });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -306,6 +321,47 @@ export default function ProxiesPage() {
 
   const getInactiveProxiesCount = () => {
     return proxies.filter(proxy => !proxy.enabled).length;
+  };
+
+  const isAllSelected = selectedIds.length > 0 && selectedIds.length === proxies.length;
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(proxies.map(p => p.id));
+    }
+  };
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  const copySelected = () => {
+    if (selectedIds.length === 0) return;
+    const lines = proxies
+      .filter(p => selectedIds.includes(p.id))
+      .map(p => {
+        if (p.username) {
+          return `${p.host}:${p.port}:${p.username}:${p.password || ""}`;
+        }
+        return `${p.host}:${p.port}`;
+      });
+    navigator.clipboard.writeText(lines.join("\n"));
+    toast({ title: "Thành công", description: `Đã copy ${lines.length} proxy` });
+  };
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setDeleting(true);
+    try {
+      await Promise.all(
+        selectedIds.map(id => api.delete(`/api/proxies/${id}`, { showLoading: false }))
+      );
+      toast({ title: "Thành công", description: "Đã xóa proxy đã chọn" });
+      setSelectedIds([]);
+      refreshProxies();
+    } catch (error: any) {
+      toast({ title: "Lỗi", description: error.message || "Không thể xóa" , variant: "destructive", type: "error"});
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (!isMounted || isLoading) {
@@ -418,6 +474,51 @@ export default function ProxiesPage() {
               </div>
             </div>
 
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <span className="text-sm font-medium text-blue-800">
+                  Đã chọn {selectedIds.length} proxy
+                </span>
+                <div className="flex gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy
+                        <ChevronDown className="w-4 h-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => copySelected()}>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy proxy
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedIds([])}
+                  >
+                    Bỏ chọn tất cả
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleBulkDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-1" />
+                    )}
+                    Xoá
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {proxies.length === 0 ? (
               <div className="text-center py-12 flex-1">
                 <Server className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
@@ -433,10 +534,13 @@ export default function ProxiesPage() {
             ) : (
               <>
                 <div className="rounded-md border flex-1 flex flex-col overflow-hidden">
-                  <div className="flex-1 overflow-auto">
+                  <div className="flex-1 overflow-hidden">
                     <Table className={isCompactView ? "text-sm" : ""}>
                       <TableHeader className="sticky top-0 bg-white z-10">
                         <TableRow>
+                          <TableHead>
+                            <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
+                          </TableHead>
                           <TableHead>Host</TableHead>
                           <TableHead>Port</TableHead>
                           <TableHead>Username</TableHead>
@@ -450,6 +554,9 @@ export default function ProxiesPage() {
                             key={proxy.id}
                             className={isCompactView ? "h-12" : ""}
                           >
+                            <TableCell className={isCompactView ? "py-2" : ""}>
+                              <Checkbox checked={selectedIds.includes(proxy.id)} onCheckedChange={() => toggleSelect(proxy.id)} />
+                            </TableCell>
                             <TableCell className={`font-medium ${isCompactView ? "py-2" : ""}`}>
                               <div className="flex items-center gap-2">
                                 <Globe className="w-4 h-4 text-primary" />
@@ -492,22 +599,6 @@ export default function ProxiesPage() {
                                   </TooltipTrigger>
                                   <TooltipContent>
                                     <p>Kiểm tra kết nối proxy</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleEdit(proxy)}
-                                      className="gap-1"
-                                    >
-                                      <Edit className="w-3 h-3" />
-                                      Edit
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Chỉnh sửa thông tin proxy</p>
                                   </TooltipContent>
                                 </Tooltip>
                                 <Tooltip>
