@@ -29,7 +29,8 @@ import {
   X,
   Zap,
   Trash2,
-  TestTube
+  TestTube,
+  ShoppingBag
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,13 +95,13 @@ export default function DashboardLayout({
 
   const navigation = [
     {
-      name: "Dashboard",
+      name: "Tổng Quan",
       href: "/dashboard",
       icon: Home,
       description: "Tổng quan hệ thống",
     },
     {
-      name: "Account Management",
+      name: "Quản Lý Tài Khoản",
       href: "/dashboard/accounts",
       icon: UserCheck,
       description: "Quản lý tài khoản",
@@ -112,47 +113,59 @@ export default function DashboardLayout({
       description: "Quản lý thiên đạo ban thuởng",
     },
     {
-      name: "Clans Management",
+      name: "Danh Sách Tông Môn",
       href: "/dashboard/clans",
       icon: Shield,
-      description: "Quản lý clan",
+      description: "Danh sách tông môn HH3D",
     },
     {
-      name: "Proxy Management",
+      name: "Quản Lý Tông Môn",
+      href: "/dashboard/clan-management",
+      icon: Users,
+      description: "Quản lý tông môn HH3D",
+    },
+    {
+      name: "Quản Lý Proxy",
       href: "/dashboard/proxy",
       icon: Server,
       description: "Quản lý proxy",
     },
     {
-      name: "Deleted Proxies",
+      name: "Proxy Đã Xóa",
       href: "/dashboard/proxy/deleted",
       icon: Trash2,
       description: "Proxy đã xóa",
     },
     {
-      name: "Proxy Checker",
+      name: "Kiểm Tra Proxy",
       href: "/dashboard/proxy/checker",
       icon: TestTube,
       description: "Kiểm tra proxy",
     },
     {
-      name: "Wedding Reports",
+      name: "Báo Cáo Quà Cưới",
       href: "/dashboard/wedding-reports",
       icon: Gift,
       description: "Báo cáo quà cưới",
+    },
+    {
+      name: 'Tụ Bảo Các',
+      href: '/dashboard/user-shop',
+      icon: ShoppingBag,
+      description: 'Quản lý cửa hàng người dùng'
     },
   ];
 
   // Add User Management only for admin
   const adminNavigation = [
     {
-      name: "User Management",
-      href: "/dashboard/user",
+      name: "Quản Lý Người Dùng",
+      href: "/dashboard/users",
       icon: Users,
       description: "Quản lý người dùng",
     },
     {
-      name: "System Options",
+      name: "Cấu Hình Hệ Thống",
       href: "/dashboard/system-options",
       icon: Settings,
       description: "Cấu hình hệ thống",

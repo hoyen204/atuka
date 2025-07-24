@@ -1,21 +1,21 @@
 # Ultra-lightweight multi-stage build for Next.js
-FROM node:18-alpine AS base
+FROM node:24-alpine AS base
 
 # Install only essential dependencies
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Dependencies installer stage - skip postinstall
-FROM base AS deps
+# FROM base AS deps
 # Copy package files
-COPY package.json package-lock.json* ./
+# COPY package.json package-lock.json* ./
 
 # Install production dependencies only, skip postinstall scripts
-RUN npm ci --omit=dev --omit=optional --no-audit --no-fund --ignore-scripts && \
-    npm cache clean --force
+# RUN npm ci --omit=dev --omit=optional --no-audit --no-fund --ignore-scripts && \
+#     npm cache clean --force
 
 # Builder stage - use Debian for better compatibility
-FROM node:18-slim AS builder
+FROM node:24 AS builder
 WORKDIR /app
 
 # Copy package files and source code first
@@ -29,16 +29,21 @@ ENV DATABASE_URL=$DATABASE_URL
 # Install all dependencies for building (with postinstall working now)
 RUN npm ci --no-audit --no-fund
 
+# Explicitly install Lightning CSS and rebuild native deps
+RUN npm install --force lightningcss && npm rebuild
+
 # Generate Prisma client (lightweight)
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
 # Build Next.js (standalone mode)
 ENV NODE_ENV=production
-RUN npm run build && \
-    npm cache clean --force
+RUN npm run build
+
+# Prune dev dependencies
+RUN npm prune --omit=dev && npm cache clean --force
 
 # Ultra-lightweight production stage with distroless
-FROM gcr.io/distroless/nodejs18-debian11 AS runner
+FROM gcr.io/distroless/nodejs24-debian12 AS runner
 
 WORKDIR /app
 
@@ -48,7 +53,7 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Copy only production node_modules (without build tools)
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy built Next.js standalone app
 COPY --from=builder /app/.next/standalone ./

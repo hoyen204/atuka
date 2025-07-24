@@ -26,8 +26,6 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DashboardWidget } from "@/components/ui/dashboard-widget";
-import { StatusIndicator } from "@/components/ui/status-indicator";
 import { QuickAction } from "@/components/ui/quick-action";
 
 export default function DashboardPage() {
