@@ -65,7 +65,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {icon}
           </span>
         )}
-        <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 flex items-center justify-center gap-2">
+        <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
           {children}
         </span>
         {variant === "default" && (

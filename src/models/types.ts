@@ -27,12 +27,13 @@ export type UserCreateInput = {
   password?: string;
 };
 
-export type AccountCreateInput = {
-  id: number;
-  name: string;
-  cookie: string;
-  creatorId: string;
-  autoLoginTimeRange: any;
+export type Account = {
+    id: number;
+    username: string;
+    name: string;
+    cookie: string;
+    userAgent?: string;
+    // ... other properties
 };
 
 // API DTOs

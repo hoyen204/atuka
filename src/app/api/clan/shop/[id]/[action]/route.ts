@@ -83,7 +83,7 @@ export async function POST(
     };
 
     if (proxy) {
-      const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`;
+      const proxyUrl = proxy.username ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}` : `http://${proxy.host}:${proxy.port}`;
       fetchOptions.dispatcher = new ProxyAgent(proxyUrl);
     }
 
