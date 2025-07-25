@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { ProxyAgent, fetch } from "undici";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth.config";
 
 const db = new PrismaClient();
 
@@ -17,6 +19,11 @@ async function getProxy(proxyId: string) {
 }
 
 export async function GET(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const accountId = searchParams.get("accountId");
   const proxyId = searchParams.get("proxyId") || "random";
@@ -26,6 +33,11 @@ export async function GET(request: Request) {
       { success: false, error: "Missing accountId" },
       { status: 400 }
     );
+  }
+
+  const account = await db.account.findUnique({ where: { id: Number(accountId), creatorId: session.user.id } });
+  if (!account) {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
   const baseUrlConfig = await prisma.config.findUnique({
@@ -61,6 +73,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   const { accountId, proxyId = "random", system } = await request.json();
 
   if (!accountId) {
@@ -71,7 +88,7 @@ export async function POST(request: Request) {
   }
 
   const account = await db.account.findUnique({
-    where: { id: Number(accountId) },
+    where: { id: Number(accountId), creatorId: session.user.id },
   });
   if (!account || !account.cookie) {
     return NextResponse.json(
