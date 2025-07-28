@@ -68,8 +68,10 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
 
   try {
     const response = await ApiRequestService.gI().requestWithRetry(config.url, config, proxy);
+    console.log("Claim reward successful response:", response.data);
     return { success: true, data: response.data };
   } catch (error: any) {
+    console.error("Error during claimReward API request:", error.message);
     const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;
     return { success: false, data: { message: errorMessage } };
   }
@@ -199,4 +201,4 @@ export async function POST(request: NextRequest) {
       message: error.message || "Unknown error"
     }, { status: 500 });
   }
-} 
+}

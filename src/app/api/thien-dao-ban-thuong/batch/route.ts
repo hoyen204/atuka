@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import ApiRequestService from "@/app/services/ApiService";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { extractRewards, extractNonces } from "@/lib/reward-extractor";
-import ApiRequestService from "@/app/services/ApiService";
+import { extractNonces, extractRewards } from "@/lib/reward-extractor";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
 
 interface ClaimDetail {
   id: string;
@@ -26,7 +25,7 @@ interface ClaimResult {
 }
 
 async function fetchPageContent(url: string, cookie: string, proxy?: string): Promise<string> {
-  
+
   const config: any = {
     method: 'GET',
     url: url,
@@ -36,13 +35,13 @@ async function fetchPageContent(url: string, cookie: string, proxy?: string): Pr
     },
     timeout: 30000
   };
-  
+
   const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
   return response.data;
 }
 
 async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, proxy?: string, rewardType: string = 'normal') {
-  
+
   let postData;
   if (rewardType === 'anniversary' || rewardId === 'anniversary_reward') {
     postData = new URLSearchParams({
@@ -61,7 +60,7 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
       security: nonce
     });
   }
-  
+
   const config: any = {
     method: "POST",
     url: `${baseUrl}/wp-admin/admin-ajax.php`,
@@ -77,14 +76,16 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
   const url = `${baseUrl}/wp-admin/admin-ajax.php`;
   try {
     const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
+    console.log("Batch claim reward successful response:", response.data);
     return { success: true, data: response.data };
   } catch (error: any) {
+    console.error("Error during batch claimReward API request:", error.message);
     const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;
     return { success: false, data: { message: errorMessage } };
   }
 }
 
-async function processAccountRewards(account: any, baseUrl:string): Promise<ClaimResult> {
+async function processAccountRewards(account: any, baseUrl: string): Promise<ClaimResult> {
   const result: ClaimResult = {
     accountId: account.id,
     accountName: account.name,
@@ -98,13 +99,13 @@ async function processAccountRewards(account: any, baseUrl:string): Promise<Clai
   try {
     const url = `${baseUrl}/thien-dao-ban-thuong?t=9e876`;
     const html = await fetchPageContent(url, account.cookie, account.proxy || undefined);
-    
+
     const nonces = extractNonces(html);
     if (Object.keys(nonces).length === 0 || !nonces.default) {
       result.error = "Could not extract any nonce from page";
       return result;
     }
-    
+
     const allRewards = extractRewards(html);
     const claimableRewards = allRewards.filter(r => r.canClaim);
     result.total = claimableRewards.length;
@@ -133,7 +134,7 @@ async function processAccountRewards(account: any, baseUrl:string): Promise<Clai
       try {
         // Add a random delay to mimic human behavior
         await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
-        
+
         const claimResponse = await claimReward(
           baseUrl,
           reward.id,
@@ -142,7 +143,7 @@ async function processAccountRewards(account: any, baseUrl:string): Promise<Clai
           account.proxy || undefined,
           reward.type
         );
-        
+
         if (claimResponse.success) {
           claimDetail.success = true;
           claimDetail.reward = claimResponse.data || claimResponse;
@@ -169,7 +170,7 @@ async function processAccountRewards(account: any, baseUrl:string): Promise<Clai
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -178,7 +179,7 @@ export async function POST(req: NextRequest) {
     const { accountIds, allAccounts = false } = body;
 
     let accounts;
-    
+
     if (allAccounts) {
       accounts = await prisma.account.findMany({
         where: {
@@ -208,8 +209,8 @@ export async function POST(req: NextRequest) {
         }
       });
     } else {
-      return NextResponse.json({ 
-        error: "Either accountIds array or allAccounts=true is required" 
+      return NextResponse.json({
+        error: "Either accountIds array or allAccounts=true is required"
       }, { status: 400 });
     }
 
@@ -220,18 +221,18 @@ export async function POST(req: NextRequest) {
     const baseUrlConfig = await prisma.config.findUnique({
       where: { key: 'BASE_URL' }
     });
-    
+
     if (!baseUrlConfig) {
       return NextResponse.json({ error: "BASE_URL config not found" }, { status: 500 });
     }
 
     const baseUrl = baseUrlConfig.value;
     const results: ClaimResult[] = [];
-    
+
     for (const account of accounts) {
       const result = await processAccountRewards(account, baseUrl);
       results.push(result);
-      
+
       await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
     }
 
@@ -242,17 +243,17 @@ export async function POST(req: NextRequest) {
       totalRewardsAvailable: results.reduce((sum, r) => sum + r.total, 0)
     };
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: results,
       summary
     });
 
   } catch (error: any) {
     console.error("Error in batch claim:", error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: "Internal server error",
       message: error.message || "Unknown error"
     }, { status: 500 });
   }
-} 
+}

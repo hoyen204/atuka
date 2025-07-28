@@ -1,4 +1,3 @@
-import { HttpsProxyAgent } from "https-proxy-agent";
 import { ProxyAgent, request } from "undici";
 
 class ApiRequestService {
@@ -39,9 +38,9 @@ class ApiRequestService {
 
     try {
       const { body, statusCode } = await request(url, options);
+      const bodyText = await body.text();
       if (statusCode >= 200 && statusCode < 300) {
         try {
-          const bodyText = await body.text();
           try {
             const data = JSON.parse(bodyText);
             return {
@@ -57,6 +56,12 @@ class ApiRequestService {
         } catch (error: any) {
           throw new Error(`Error reading response body: ${error.message}`);
         }
+      }
+      else { 
+        return {
+          data: bodyText,
+          status: statusCode,
+        };
       }
     } catch (error: any) {
       if (
