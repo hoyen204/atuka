@@ -1,12 +1,21 @@
 "use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 
 interface InventoryItem {
   id: string;
@@ -56,7 +65,7 @@ export function InventoryTab({
       });
 
       const response = await fetch(`/api/hoang-vuc/inventory?${params}`, {
-        method: 'POST',
+        method: "POST",
       });
 
       const data = await response.json();
@@ -68,7 +77,16 @@ export function InventoryTab({
           variant: "success",
         });
         if (data.data.rewards && data.data.rewards.length > 0) {
-          setCurrentRewards(data.data.rewards);
+          const rewards = data.data.rewards.sort((a: Reward, b: Reward) => {
+            if (a.type < b.type) {
+              return -1;
+            }
+            if (a.type > b.type) {
+              return 1;
+            }
+            return 0;
+          });
+          setCurrentRewards(rewards);
           setShowRewardModal(true);
         } else {
           onRefresh();
@@ -121,28 +139,28 @@ export function InventoryTab({
 
   const getImageFromType = (type: string) => {
     switch (type) {
-      case 'manh_ruong_linh_bao':
-        return '/manh-ruong-linh-bao.webp';
-      case 'manh_ruong_phap_bao':
-        return '/manh-ruong-phap-bao.png';
-      case 'tinh_huyet':
-        return '/tinh-huyet.gif';
-      case 'chia_linh_bao':
-        return '/chia-linh-bao.png';
-      case 'tuyet_sat_phu':
+      case "manh_ruong_linh_bao":
+        return "/manh-ruong-linh-bao.webp";
+      case "manh_ruong_phap_bao":
+        return "/manh-ruong-phap-bao.png";
+      case "tinh_huyet":
+        return "/tinh-huyet.gif";
+      case "chia_linh_bao":
+        return "/chia-linh-bao.png";
+      case "tuyet_sat_phu":
         return "/tuyet-sat-phu.webp";
-      case 'tuyet_sat_linh_bao':
+      case "tuyet_sat_linh_bao":
         return "/ho-than-phu.webp";
-      case 'than_luc_phu':
+      case "than_luc_phu":
         return "/than-luc-phu.webp";
-      case 'manh_ruong_than_phu':
+      case "manh_ruong_than_phu":
         return "/manh-ruong-than-phu.webp";
-      case 'ruong_than_phu':
+      case "ruong_than_phu":
         return "/ruong-than-phu.webp";
       default:
-        return '/ruong-linh-bao.webp';
+        return "/ruong-linh-bao.webp";
     }
-  }
+  };
 
   return (
     <div className="p-4">
@@ -200,9 +218,10 @@ export function InventoryTab({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className='text-center'>
-              <span className='text-2xl'>🎉</span> Chúc mừng! <span className='text-2xl'>🎉</span>
-              </DialogTitle>
+            <DialogTitle className="text-center">
+              <span className="text-2xl">🎉</span> Chúc mừng!{" "}
+              <span className="text-2xl">🎉</span>
+            </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-4 items-center justify-center">
             {currentRewards.map((item) => (
@@ -212,12 +231,10 @@ export function InventoryTab({
                     <img
                       src={getImageFromType(item.type)}
                       alt={item.name}
-                      className="w-16 h-16 mx-auto"
+                      className="w-6 h-6 mx-auto"
                     />
                   ) : (
-                    <span>
-                      {item.type === "tu_vi" ? "✨" : "💎"}
-                    </span>
+                    <span>{item.type === "tu_vi" ? "✨" : "💎"}</span>
                   )}
                   {item.name}{" "}
                   <span className="text-md text-yellow-500">

@@ -69,6 +69,7 @@ const balanceConfig = [
 
 const UserBalanceDisplay = ({ userBalance }: { userBalance: UserBalance }) => (
   <div className="flex flex-col gap-2">
+    <h3 className="text-sm font-bold text-center">Số dư của bạn</h3>
     {balanceConfig.map(({ key, label }) => (
       <span className="text-sm" key={key}>
         {label}: {Number(userBalance[key]).toLocaleString()}
@@ -87,6 +88,10 @@ export function ShopItem({
   isLoading,
 }: ShopItemProps) {
   const [quantity, setQuantity] = useState(1);
+  const normalizedCurrency = nomalizeCurrency(item.currency) as keyof UserBalance;
+  const balanceAmount = userBalance ? Number(userBalance[normalizedCurrency] ?? 0) : 0;
+  const maxQuantity = Math.floor(balanceAmount / item.cost) || 0;
+
 
   const handleBuy = useCallback(async () => {
     if (!accountId) return;
@@ -111,21 +116,21 @@ export function ShopItem({
       }
 
       if (data.success) {
-        toast({
+        toast.toast({
           title: "Mua thành công",
-          description: `Bạn đã mua ${quantity}x ${item.name} thành công`,
+          description: data.data.message,
           variant: "default",
         });
         onRefresh();
       } else {
-        toast({
+        toast.toast({
           title: "Lỗi",
           description: data.data || "Lỗi khi mua item",
           variant: "destructive",
         });
       }
     } catch (error) {
-      toast({
+      toast.toast({
         title: "Lỗi",
         description:
           error instanceof Error ? error.message : "Failed to buy item",
@@ -159,19 +164,30 @@ export function ShopItem({
               <Input
                 type="number"
                 value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
+                onChange={(e) => {
+                  const newVal = Number(e.target.value);
+                  setQuantity(isNaN(newVal) ? 0 : newVal);
+                }}
+                onBlur={(e) => {
+                  let val = Number(e.target.value);
+                  if (isNaN(val)) val = 1;
+                  setQuantity(Math.min(Math.max(1, val), maxQuantity));
+                }}
                 min={1}
+                max={maxQuantity}
               />
+              <Button
+                variant="outline"
+                onClick={() => setQuantity(maxQuantity)}
+                disabled={isLoading}
+              >
+                Tối đa
+              </Button>
             </div>
             <span
               className={
                 "text-sm " +
-                (Number(
-                  userBalance?.[
-                    nomalizeCurrency(item.currency) as keyof UserBalance
-                  ] ?? 0
-                ) <
-                quantity * item.cost
+                (balanceAmount < quantity * item.cost
                   ? "text-red-400"
                   : "text-green-500")
               }
@@ -181,7 +197,11 @@ export function ShopItem({
             <Button
               className="w-full mt-auto"
               onClick={handleBuy}
-              disabled={isLoading}
+              disabled={
+                isLoading ||
+                quantity < 1 ||
+                balanceAmount < quantity * item.cost
+              }
             >
               {isLoading ? "Đang xử lý..." : "Mua"}
             </Button>

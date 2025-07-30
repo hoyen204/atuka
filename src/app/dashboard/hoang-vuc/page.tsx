@@ -95,8 +95,15 @@ export default function HoangVucPage() {
       });
       const response = await fetch(`/api/hoang-vuc/user-balance?${params}`);
       const data = await response.json();
-      console.log(data);
-      setUserBalance(data);
+      if (!response.ok || !data.success) {
+        toast.toast({
+          title: "Lỗi",
+          description: data.message || "Không thể tải dữ liệu user balance.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUserBalance(data.data);
     } catch (error) {
       toast.toast({
         title: "Lỗi",
