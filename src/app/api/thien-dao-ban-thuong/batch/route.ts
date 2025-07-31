@@ -1,6 +1,7 @@
 import ApiRequestService from "@/app/services/ApiService";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
+import { fetch, ProxyAgent } from 'undici';
 import { extractNonces, extractRewards } from "@/lib/reward-extractor";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,23 +25,44 @@ interface ClaimResult {
   error: string | null;
 }
 
-async function fetchPageContent(url: string, cookie: string, proxy?: string): Promise<string> {
-
-  const config: any = {
-    method: 'GET',
-    url: url,
-    headers: {
-      'cookie': cookie,
-      'user-agent': 'XXX'
-    },
-    timeout: 30000
-  };
-
-  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
-  return response.data;
+async function getRandomProxy() {
+  const proxyCount = await prisma.proxy.count({ where: { enabled: true } });
+  if (proxyCount === 0) return null;
+  const skip = Math.floor(Math.random() * proxyCount);
+  return await prisma.proxy.findFirst({
+    where: { enabled: true },
+    skip: skip,
+  });
 }
 
-async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, proxy?: string, rewardType: string = 'normal') {
+async function fetchPageContent(url: string, cookie: string): Promise<string> {
+  const fetchOptions: any = {
+    method: 'GET',
+    headers: {
+      'Cookie': cookie,
+      'User-Agent': 'XXX',
+    },
+    // Undici's default timeout is 30 seconds, matching the original config
+  };
+
+  const proxy = await getRandomProxy();
+  if (proxy) {
+    const proxyUrl = proxy.username && proxy.password
+      ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`
+      : `http://${proxy.host}:${proxy.port}`;
+    fetchOptions.dispatcher = new ProxyAgent(proxyUrl);
+  }
+
+  const response = await fetch(url, fetchOptions);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+  }
+
+  return response.text();
+}
+
+async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, rewardType: string = 'normal') {
 
   let postData;
   if (rewardType === 'anniversary' || rewardId === 'anniversary_reward') {
@@ -61,27 +83,38 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
     });
   }
 
-  const config: any = {
+  const fetchOptions: any = {
     method: "POST",
-    url: `${baseUrl}/wp-admin/admin-ajax.php`,
     headers: {
-      accept: "application/json, text/javascript, */*; q=0.01",
-      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-      cookie: cookie,
-      referer: `${baseUrl}/thien-dao-ban-thuong`,
+      "Accept": "application/json, text/javascript, */*; q=0.01",
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "Cookie": cookie,
+      "Referer": `${baseUrl}/thien-dao-ban-thuong`,
     },
-    data: postData,
+    body: postData.toString(),
   };
 
-  const url = `${baseUrl}/wp-admin/admin-ajax.php`;
   try {
-    const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
-    console.log("Batch claim reward successful response:", response.data);
-    return { success: true, data: response.data };
+    const proxy = await getRandomProxy();
+    if (proxy) {
+      const proxyUrl = proxy.username && proxy.password
+        ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`
+        : `http://${proxy.host}:${proxy.port}`;
+      fetchOptions.dispatcher = new ProxyAgent(proxyUrl);
+    }
+
+    const response = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, fetchOptions);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to claim reward: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const data: any = await response.json();
+    return { success: true, data: data.message };
   } catch (error: any) {
     console.error("Error during batch claimReward API request:", error.message);
-    const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;
-    return { success: false, data: { message: errorMessage } };
+    return { success: false, data: { message: error.message } };
   }
 }
 
@@ -98,7 +131,7 @@ async function processAccountRewards(account: any, baseUrl: string): Promise<Cla
 
   try {
     const url = `${baseUrl}/thien-dao-ban-thuong?t=9e876`;
-    const html = await fetchPageContent(url, account.cookie, account.proxy || undefined);
+    const html = await fetchPageContent(url, account.cookie);
 
     const nonces = extractNonces(html);
     if (Object.keys(nonces).length === 0 || !nonces.default) {
@@ -132,15 +165,13 @@ async function processAccountRewards(account: any, baseUrl: string): Promise<Cla
       }
 
       try {
-        // Add a random delay to mimic human behavior
-        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
+
 
         const claimResponse = await claimReward(
           baseUrl,
           reward.id,
           nonceForReward,
           account.cookie,
-          account.proxy || undefined,
           reward.type
         );
 
@@ -229,11 +260,17 @@ export async function POST(req: NextRequest) {
     const baseUrl = baseUrlConfig.value;
     const results: ClaimResult[] = [];
 
-    for (const account of accounts) {
-      const result = await processAccountRewards(account, baseUrl);
-      results.push(result);
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
+      const chunk = accounts.slice(i, i + CHUNK_SIZE);
 
-      await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000));
+      const chunkResults = await Promise.all(
+        chunk.map(async (account) => {
+          return processAccountRewards(account, baseUrl);
+        })
+      );
+
+      results.push(...chunkResults);
     }
 
     const summary = {

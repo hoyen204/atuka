@@ -68,6 +68,8 @@ export class ClanShopParser implements ShopItemParser, ShopItemExtractor {
       const $item = $(element);
       const name = this.extractItemName($item);
       const tuViBonus = this.extractTuViBonus(name);
+      const button = $item.find('button');
+      const actionType = button.hasClass('sell_pb_phap_bao') ? 'sell' : 'buy';
 
       const phapBaoItem: PhapBaoItem = {
         id: this.extractItemId($item),
@@ -78,7 +80,8 @@ export class ClanShopParser implements ShopItemParser, ShopItemExtractor {
         category: 'phap-bao',
         tuViBonus: tuViBonus,
         isEligible: this.checkEligibility($item),
-        eligibilityReason: this.extractEligibilityReason($item)
+        eligibilityReason: this.extractEligibilityReason($item),
+        actionType,
       };
 
       items.push(phapBaoItem);

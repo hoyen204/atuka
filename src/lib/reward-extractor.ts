@@ -120,7 +120,7 @@ export function extractRewards(html: string): Reward[] {
                   'Phần thưởng';
 
     const description = $element.find('.reward-description, .tdbt-description, .reward-desc, p').first().text().trim() || 
-                        title; // Fallback to title if no other description
+                        title;
 
     const isClaimed = $button.hasClass('claimed') ||
                    $button.prop('disabled') === true ||

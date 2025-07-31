@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
-import { HttpsProxyAgent } from "https-proxy-agent";
 import { randomInt } from "crypto";
 import { extractRewards, extractNonces, Reward } from "@/lib/reward-extractor";
-import ApiRequestService from "@/app/services/ApiService";
+import { fetch, ProxyAgent } from 'undici';
 
 interface RewardInfo {
   rewards: Reward[];
@@ -21,19 +20,43 @@ interface PageInfo {
   error?: string;
 }
 
-async function fetchWithProxy(url: string, cookie: string, proxy?: string): Promise<string> {
-  
-  const config: any = {
-    headers: {
-      'cookie': cookie,
-    },
-  };
-  
-  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
-  return response.data;
+async function getRandomProxy() {
+  const proxyCount = await prisma.proxy.count({ where: { enabled: true } });
+  if (proxyCount === 0) return null;
+  const skip = Math.floor(Math.random() * proxyCount);
+  return await prisma.proxy.findFirst({
+    where: { enabled: true },
+    skip: skip,
+  });
 }
 
-async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, proxy?: string, rewardType: string = 'normal') {
+async function fetchWithProxy(url: string, cookie: string): Promise<string> {
+  const fetchOptions: any = {
+    method: 'GET',
+    headers: {
+      'Cookie': cookie,
+      'User-Agent': 'XXX',
+    },
+  };
+
+  const proxy = await getRandomProxy();
+  if (proxy) {
+    const proxyUrl = proxy.username && proxy.password
+      ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`
+      : `http://${proxy.host}:${proxy.port}`;
+    fetchOptions.dispatcher = new ProxyAgent(proxyUrl);
+  }
+
+  const response = await fetch(url, fetchOptions);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+  }
+
+  return response.text();
+}
+
+async function claimReward(baseUrl: string, rewardId: string, nonce: string, cookie: string, rewardType: string = 'normal') {
   let postData;
   if (rewardType === 'anniversary' || rewardId === 'anniversary_reward') {
     postData = new URLSearchParams({
@@ -53,27 +76,39 @@ async function claimReward(baseUrl: string, rewardId: string, nonce: string, coo
     });
   }
   
-  const config = {
+  const fetchOptions: any = {
     method: 'POST',
-    url: `${baseUrl}/wp-admin/admin-ajax.php`,
     headers: {
-      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'cookie': cookie,
-      'origin': baseUrl,
-      'referer': `${baseUrl}/thien-dao-ban-thuong`,
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'Cookie': cookie,
+      'Origin': baseUrl,
+      'Referer': `${baseUrl}/thien-dao-ban-thuong`,
     },
-    data: postData,
-    timeout: 15000,
+    body: postData.toString(),
   };
 
   try {
-    const response = await ApiRequestService.gI().requestWithRetry(config.url, config, proxy);
-    console.log("Claim reward successful response:", response.data);
-    return { success: true, data: response.data };
+    const proxy = await getRandomProxy();
+    if (proxy) {
+      const proxyUrl = proxy.username && proxy.password
+        ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`
+        : `http://${proxy.host}:${proxy.port}`;
+      fetchOptions.dispatcher = new ProxyAgent(proxyUrl);
+    }
+
+    const response = await fetch(`${baseUrl}/wp-admin/admin-ajax.php`, fetchOptions);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to claim reward: ${response.status} ${response.statusText} - ${errorText}`);
+    }
+
+    const data : any = await response.json();
+    console.log("Claim reward successful response:", data);
+    return { success: true, data: data.message };
   } catch (error: any) {
     console.error("Error during claimReward API request:", error.message);
-    const errorMessage = error.response?.data?.data?.message || error.response?.data?.message || error.message;
-    return { success: false, data: { message: errorMessage } };
+    return { success: false, data: { message: error.message } };
   }
 }
 
@@ -84,7 +119,7 @@ async function getRewardsInfo(account: any, baseUrl: string): Promise<PageInfo> 
 
   try {
     const url = `${baseUrl}/thien-dao-ban-thuong?t=${randomInt(1000000000, 9999999999)}`;
-    const html = await fetchWithProxy(url, account.cookie, account.proxy || undefined);
+    const html = await fetchWithProxy(url, account.cookie);
 
     const rewards = extractRewards(html);
     const nonces = extractNonces(html);
@@ -160,11 +195,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { accountId, rewardId, nonce, baseUrl, rewardType } = body;
+    const { accountId, rewardId, nonce, rewardType } = body;
     
-    if (!accountId || !rewardId || !nonce || !baseUrl) {
+    if (!accountId || !rewardId || !nonce) {
       return NextResponse.json({ 
-        error: "Missing required fields: accountId, rewardId, nonce, baseUrl" 
+        error: "Missing required fields: accountId, rewardId, nonce" 
       }, { status: 400 });
     }
 
@@ -175,6 +210,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    const baseUrlConfig = await prisma.config.findUnique({
+      where: { key: 'BASE_URL' }
+    });
+
+    if (!baseUrlConfig) {
+      return NextResponse.json({ error: "BASE_URL config not found" }, { status: 500 });
+    }
+
+    const baseUrl = baseUrlConfig.value;
+
     if (!account) {
       return NextResponse.json({ error: "Account not found" }, { status: 404 });
     }
@@ -184,13 +229,12 @@ export async function POST(request: NextRequest) {
       rewardId,
       nonce,
       account.cookie,
-      account.proxy || undefined,
       rewardType || 'normal'
     );
 
     return NextResponse.json({ 
       success: true, 
-      data: result,
+      data: result.data,
       message: "Reward claimed successfully"
     });
 

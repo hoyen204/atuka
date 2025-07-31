@@ -66,19 +66,19 @@ const ItemCard = ({
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50">
-      <CardContent className="p-4 flex flex-col flex-grow">
+      <CardContent className="p-4 flex flex-col flex-grow gap-1">
         <CardTitle className="text-lg mb-2 flex-grow">{item.name}</CardTitle>
         {item.category === "danduoc" && (
           <>
-            <p className="text-sm text-muted-foreground mb-4">
-              Tu vi sử dụng: {item.tuViRange}
+            <p className="text-sm">
+              Tu vi: {item.tuViRange || "Không giới hạn"}
             </p>
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm">
               Có thể sử dụng: {item.usedCount}/{item.usageLimit}
             </p>
           </>
         )}
-        <div className="flex items-center text-lg font-bold text-primary mb-4">
+        <div className="flex items-center text-sm text-primary">
           <Gem className="w-4 h-4 mr-2" /> {item.price.toLocaleString()}
         </div>
 

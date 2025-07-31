@@ -116,10 +116,15 @@ export default function HoangVucPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Hoang Vực</h1>
-      <div className="flex flex-col md:flex-row gap-4 items-end justify-end mb-4">
-        <div className="w-1/6">
+    <div className="space-y-6 p-4">
+      <h1 className="text-2xl font-bold">Hoang Vực</h1>
+
+      {/* Controls */}
+      <div className="flex flex-col md:flex-row gap-4 items-end justify-end mb-6">
+        <div className="w-full md:w-1/4">
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            Tài khoản
+          </label>
           <Select
             onValueChange={setSelectedAccount}
             value={selectedAccount || undefined}
@@ -136,7 +141,10 @@ export default function HoangVucPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-1/6">
+        <div className="w-full md:w-1/4">
+          <label className="text-sm font-medium text-foreground mb-2 block">
+            Proxy
+          </label>
           <Select onValueChange={setSelectedProxy} value={selectedProxy}>
             <SelectTrigger>
               <SelectValue placeholder="Chọn proxy" />
@@ -152,31 +160,40 @@ export default function HoangVucPage() {
           </Select>
         </div>
       </div>
+
+      {/* Tabs */}
       <Tabs defaultValue="shop" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="shop">Tiệm</TabsTrigger>
-          <TabsTrigger value="inventory">Túi</TabsTrigger>
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+          <TabsTrigger value="shop">
+            <span className="flex items-center gap-2">🏪 Tiệm</span>
+          </TabsTrigger>
+          <TabsTrigger value="inventory">
+            <span className="flex items-center gap-2">🎒 Túi</span>
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="shop">
-          <ShopTab
-            isLoading={isLoadingUserBalance}
-            selectedAccount={selectedAccount}
-            selectedProxy={selectedProxy}
-            userBalance={userBalance}
-            onRefresh={fetchUserBalance}
-            toast={toast}
-          />
-        </TabsContent>
-        <TabsContent value="inventory">
-          <InventoryTab
-            inventoryData={inventoryData}
-            isLoading={isLoading}
-            selectedAccount={selectedAccount}
-            selectedProxy={selectedProxy}
-            onRefresh={fetchInventory}
-            toast={toast}
-          />
-        </TabsContent>
+
+        <div className="mt-6">
+          <TabsContent value="shop">
+            <ShopTab
+              isLoading={isLoadingUserBalance}
+              selectedAccount={selectedAccount}
+              selectedProxy={selectedProxy}
+              userBalance={userBalance}
+              onRefresh={fetchUserBalance}
+              toast={toast}
+            />
+          </TabsContent>
+          <TabsContent value="inventory">
+            <InventoryTab
+              inventoryData={inventoryData}
+              isLoading={isLoading}
+              selectedAccount={selectedAccount}
+              selectedProxy={selectedProxy}
+              onRefresh={fetchInventory}
+              toast={toast}
+            />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

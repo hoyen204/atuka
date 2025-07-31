@@ -23,6 +23,7 @@ export interface TongMonItem extends ShopItem {
 export interface PhapBaoItem extends ShopItem {
   category: 'phap-bao';
   priceType: 'cong-hien';
+  actionType: 'buy' | 'sell';
   tuViBonus: number;
 }
 

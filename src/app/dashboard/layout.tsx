@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,26 +10,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import {
   Bell,
-  ChevronDown,
   Gift,
   Home,
   LogOut,
   Menu,
-  Search,
   Server,
   Settings,
   Shield,
+  ShoppingBag,
+  Swords,
+  TestTube,
+  Trash2,
   UserCheck,
   Users,
   X,
-  Zap,
-  Trash2,
-  TestTube,
-  ShoppingBag
+  Zap
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -45,6 +42,9 @@ export default function DashboardLayout({
   const { user, isAuthenticated, isLoading, isMounted, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -53,9 +53,18 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, isMounted, router]);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // Close mobile menu when route changes
   useEffect(() => {
-    setIsMobileMenuOpen(false);
+    setSidebarOpen(false);
   }, [pathname]);
 
   if (!isMounted || isLoading) {
@@ -113,6 +122,18 @@ export default function DashboardLayout({
       description: "Quản lý thiên đạo ban thuởng",
     },
     {
+      name: "Đổi Hệ Thống",
+      href: "/dashboard/doi-he-thong",
+      icon: Zap,
+      description: "Quản lý đổi hệ thống",
+    },
+    {
+      name: "Hoang Vực",
+      href: "/dashboard/hoang-vuc",
+      icon: Server,
+      description: "Quản lý hoang vực",
+    },
+    {
       name: "Danh Sách Tông Môn",
       href: "/dashboard/clans",
       icon: Shield,
@@ -149,10 +170,10 @@ export default function DashboardLayout({
       description: "Báo cáo quà cưới",
     },
     {
-      name: 'Tụ Bảo Các',
-      href: '/dashboard/user-shop',
+      name: "Tụ Bảo Các",
+      href: "/dashboard/user-shop",
       icon: ShoppingBag,
-      description: 'Quản lý cửa hàng người dùng'
+      description: "Quản lý cửa hàng người dùng",
     },
   ];
 
@@ -192,16 +213,17 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 dark:from-slate-900 dark:via-slate-800 dark:to-slate-700">
-      {/* Mobile Header */}
-      <div className="lg:hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 flex-shrink-0">
+    <div className="h-screen flex flex-col bg-background">
+      {/* Mobile Header - Mobile-first design */}
+      <header className="lg:hidden bg-card border-b border-border sticky top-0 z-40 flex-shrink-0">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden"
+              className="touch-target"
+              aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? (
                 <X className="w-5 h-5" />
@@ -209,30 +231,22 @@ export default function DashboardLayout({
                 <Menu className="w-5 h-5" />
               )}
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-md blur-sm opacity-30" />
-                <div className="relative w-full h-full rounded-md overflow-hidden border border-primary/20">
-                  <Image
-                    src="/character-profile.jpg"
-                    alt="HH3D Logo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                <Swords className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="font-bold text-lg">HH3D</h1>
-            </div>
+              <span className="font-bold text-lg text-primary">HH3D</span>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="icon" className="touch-target">
               <Bell className="w-5 h-5" />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <div className="w-6 h-6 relative">
+                <Button variant="ghost" size="icon" className="touch-target">
+                  <div className="w-8 h-8 relative">
                     <Image
                       src="/character-hero.jpg"
                       alt="User Avatar"
@@ -240,22 +254,19 @@ export default function DashboardLayout({
                       className="object-cover rounded-full"
                     />
                   </div>
-                  <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.license_type}
-                    </p>
+                    <p className="font-medium text-primary">{user.name}</p>
+                    <p className="text-sm text-muted">{user.license_type}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-red-600"
+                  className="text-destructive text-center"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Đăng xuất
@@ -264,162 +275,170 @@ export default function DashboardLayout({
             </DropdownMenu>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu - High contrast */}
       {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Sidebar */}
-        <aside
-          className={`
-          fixed lg:static inset-y-0 left-0 z-50 w-72 transform transition-transform duration-300 ease-in-out lg:transform-none
-          ${
-            isMobileMenuOpen
-              ? "translate-x-0"
-              : "-translate-x-full lg:translate-x-0"
-          }
-          bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl shadow-2xl border-r border-slate-200 dark:border-slate-700
-          flex flex-col h-screen
-        `}
-        >
-          {/* Logo Section */}
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-800/50 dark:to-slate-700/50">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-md blur-md opacity-30" />
-                <div className="relative w-12 h-12 rounded-md overflow-hidden border-2 border-primary/20 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm">
-                  <Image
-                    src="/character-profile.jpg"
-                    alt="HH3D Logo"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-slate-900 dark:text-white">
-                  HH3D Management
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Admin Panel
-                </p>
+        <div className="lg:hidden fixed inset-0 z-30">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed top-0 left-0 bottom-0 w-80 max-w-[85vw] bg-card border-r border-border shadow-xl safe-area overflow-y-auto">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-primary">Menu</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="touch-target"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
             </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm..."
-                className="pl-10 bg-white/50 dark:bg-slate-700/50 border-slate-200 dark:border-slate-600"
-              />
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="p-4 flex-1 overflow-y-auto min-h-0">
-            <div className="space-y-2">
+            <nav className="p-4 space-y-1">
               {fullNavigation.map((item) => {
                 const isActive = isActivePath(item.href);
                 const Icon = item.icon;
-
                 return (
-                  <Link key={item.name} href={item.href}>
-                    <div
-                      className={`group relative overflow-hidden rounded-md transition-all duration-300 ${
-                        isActive
-                          ? "bg-gradient-to-r from-primary to-blue-600 text-white shadow-lg shadow-primary/25"
-                          : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-600 text-slate-700 dark:text-slate-300 hover:text-primary"
-                      }`}
-                    >
-                      {isActive && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center px-3 py-3 text-base font-medium rounded-lg transition-colors-subtle ${
+                      isActive
+                        ? "bg-primary/10 text-primary border-l-4 border-primary"
+                        : "text-secondary hover:text-primary hover:bg-muted/50"
+                    }`}
+                  >
+                    <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{item.name}</div>
+                      {item.description && (
+                        <div className="text-sm text-muted mt-0.5">
+                          {item.description}
+                        </div>
                       )}
-                      <div className="relative p-4 flex items-center gap-4">
-                        <div
-                          className={`w-10 h-10 rounded-md flex items-center justify-center transition-all duration-200 ${
-                            isActive
-                              ? "bg-white/20"
-                              : "bg-slate-100 dark:bg-slate-700 group-hover:bg-primary/10"
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name}</p>
-                          <p
-                            className={`text-xs ${
-                              isActive
-                                ? "text-white/80"
-                                : "text-muted-foreground"
-                            }`}
-                          >
-                            {item.description}
-                          </p>
-                        </div>
-                      </div>
                     </div>
                   </Link>
                 );
               })}
-            </div>
-          </nav>
+            </nav>
+          </div>
+        </div>
+      )}
 
-          {/* User Info & Logout */}
-          <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-gradient-to-t from-slate-50/50 to-transparent dark:from-slate-800/50 dark:to-transparent">
-            <Card className="mb-4 border-0 shadow-lg bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-slate-700/50 dark:to-slate-600/50 backdrop-blur-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary to-blue-600 rounded-full blur-sm opacity-30" />
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-primary/30">
-                      <Image
-                        src="/character-hero.jpg"
-                        alt="User Avatar"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-slate-900 dark:text-white truncate">
-                      {user.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge
-                        variant="secondary"
-                        className="text-xs px-2 py-0.5"
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Sidebar - Simplified */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 xl:w-72 flex-shrink-0">
+          <div className="flex flex-col h-full bg-card border-r border-border">
+            {/* Logo - Fixed at top */}
+            <div className="flex-shrink-0 p-6 border-b border-border">
+              <Link href="/dashboard" className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                  <Swords className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg text-primary">
+                    HH3D Management
+                  </h2>
+                  <p className="text-sm text-muted">Admin Panel</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Navigation - Scrollable */}
+            <nav className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-1">
+                {fullNavigation.map((item) => {
+                  const isActive = isActivePath(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link key={item.name} href={item.href}>
+                      <div
+                        className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors-subtle ${
+                          isActive
+                            ? "bg-primary/10 text-primary border-l-4 border-primary"
+                            : "text-secondary hover:text-primary hover:bg-muted/50"
+                        }`}
                       >
-                        {user.license_type}
-                      </Badge>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    </div>
+                        <Icon
+                          className={`w-5 h-5 mr-3 flex-shrink-0 ${
+                            isActive ? "text-primary" : "text-muted"
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">
+                            {item.name}
+                          </div>
+                          {item.description && (
+                            <div className="text-xs text-muted mt-0.5">
+                              {item.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+
+            {/* User Info & Logout - Fixed at bottom */}
+            <div className="flex-shrink-0 p-4 border-t border-border">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 relative">
+                  <Image
+                    src="/character-hero.jpg"
+                    alt="User Avatar"
+                    fill
+                    className="object-cover rounded-full"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm text-primary truncate">
+                    {user.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge
+                      variant={
+                        user.license_type === "PRO"
+                          ? "default"
+                          : user.license_type === "BASIC"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className="text-xs px-2 py-0.5"
+                    >
+                      {user.license_type === "PRO" && "👑 "}
+                      {user.license_type === "BASIC" && "⭐ "}
+                      {user.license_type === "FREE" && "🔰 "}
+                      {user.license_type}
+                    </Badge>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-              className="w-full gap-2 hover:bg-red-50 hover:text-red-600 hover:border-red-200 dark:hover:bg-red-950 transition-all duration-200"
-            >
-              <LogOut className="w-4 h-4" />
-              Đăng xuất
-            </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="w-full flex text-destructive text-center hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Đăng xuất
+              </Button>
+            </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-0 h-full overflow-y-auto">{children}</main>
+        <main className="flex-1 lg:ml-0 h-full overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

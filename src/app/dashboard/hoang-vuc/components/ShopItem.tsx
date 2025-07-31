@@ -142,23 +142,36 @@ export function ShopItem({
   return (
     <Card
       key={item.id}
-      className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50"
+      className="group flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-105"
     >
       <CardHeader>
-        <img src={item.image} alt={item.name} className="w-16 h-16 mx-auto" />
+        <img 
+          src={item.image} 
+          alt={item.name} 
+          className="w-20 h-20 mx-auto transition-all duration-300 group-hover:rotate-10" 
+        />
       </CardHeader>
       <CardContent className="p-4 flex flex-col flex-grow text-center">
-        <CardTitle>{item.name}</CardTitle>
+        <CardTitle className="text-lg mb-2">
+          {item.name}
+        </CardTitle>
         <CardDescription>
-          Giá: {item.cost} {item.currency}
+          <span className="text-lg font-bold">
+            {item.cost}
+          </span>
+          <span className="ml-1">{item.currency}</span>
         </CardDescription>
       </CardContent>
-      <CardFooter className="">
+      <CardFooter className="p-4">
         <Popover>
           <PopoverTrigger asChild>
-            <Button className="w-full mt-auto">Mua</Button>
+            <Button className="w-full mt-auto">
+              <span className="flex items-center gap-2">
+                🛒 Mua ngay
+              </span>
+            </Button>
           </PopoverTrigger>
-          <PopoverContent className="flex flex-col gap-2">
+          <PopoverContent className="flex flex-col gap-4 p-4 rounded-lg">
             <UserBalanceDisplay userBalance={userBalance} />
             <div className="flex flex-row gap-2">
               <Input
@@ -186,10 +199,10 @@ export function ShopItem({
             </div>
             <span
               className={
-                "text-sm " +
+                "text-sm font-medium " +
                 (balanceAmount < quantity * item.cost
                   ? "text-red-400"
-                  : "text-green-500")
+                  : "text-green-400")
               }
             >
               Cần: {(quantity * item.cost).toLocaleString()} {item.currency}
@@ -199,11 +212,14 @@ export function ShopItem({
               onClick={handleBuy}
               disabled={
                 isLoading ||
-                quantity < 1 ||
-                balanceAmount < quantity * item.cost
+                !accountId ||
+                balanceAmount < quantity * item.cost ||
+                quantity <= 0
               }
             >
-              {isLoading ? "Đang xử lý..." : "Mua"}
+              <span className="flex items-center gap-2">
+                ✨ Xác nhận mua
+              </span>
             </Button>
           </PopoverContent>
         </Popover>

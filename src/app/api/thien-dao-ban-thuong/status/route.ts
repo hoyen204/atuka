@@ -1,11 +1,10 @@
+import ApiRequestService from "@/app/services/ApiService";
 import { authOptions } from "@/lib/auth.config";
 import { prisma } from "@/lib/prisma";
 import { extractRewards } from "@/lib/reward-extractor";
 import { randomInt } from "crypto";
-import { HttpsProxyAgent } from "https-proxy-agent";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import ApiRequestService from "@/app/services/ApiService";
 
 interface AccountStatus {
   accountId: number;
@@ -27,18 +26,36 @@ interface RewardStatus {
   type?: string;
 }
 
-async function fetchPageContent(
-  url: string,
-  cookie: string,
-  proxy?: string
-): Promise<string> {
+async function getRandomProxy() {
+  const proxyCount = await prisma.proxy.count({ where: { enabled: true } });
+  if (proxyCount === 0) return null;
+  const skip = Math.floor(Math.random() * proxyCount);
+  return await prisma.proxy.findFirst({
+    where: { enabled: true },
+    skip: skip,
+  });
+}
+
+async function fetchPageContent(url: string, cookie: string): Promise<string> {
   const config: any = {
     headers: {
       cookie: cookie,
     },
   };
 
-  const response = await ApiRequestService.gI().requestWithRetry(url, config, proxy);
+  const proxy = await getRandomProxy();
+
+  const proxyString = proxy
+    ? proxy.username && proxy.password
+      ? `http://${proxy.username}:${proxy.password}@${proxy.host}:${proxy.port}`
+      : `http://${proxy.host}:${proxy.port}`
+    : undefined;
+
+  const response = await ApiRequestService.gI().requestWithRetry(
+    url,
+    config,
+    proxyString
+  );
   return response.data;
 }
 
@@ -61,11 +78,7 @@ async function getAccountStatus(
       1000000000,
       9999999999
     )}`;
-    const html = await fetchPageContent(
-      url,
-      account.cookie,
-      account.proxy || undefined
-    );
+    const html = await fetchPageContent(url, account.cookie);
 
     const rewards = extractRewards(html);
 
@@ -95,9 +108,9 @@ export async function POST(req: NextRequest) {
     let accounts;
 
     if (accountIds && Array.isArray(accountIds) && accountIds.length > 0) {
-       accounts = await prisma.account.findMany({
+      accounts = await prisma.account.findMany({
         where: {
-          id: { in: accountIds.map(id => Number(id)) },
+          id: { in: accountIds.map((id) => Number(id)) },
           creatorId: session.user.zalo_id,
           isLogout: false,
         },
@@ -109,7 +122,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } else {
-       accounts = await prisma.account.findMany({
+      accounts = await prisma.account.findMany({
         where: {
           creatorId: session.user.zalo_id,
           isLogout: false,
@@ -143,15 +156,29 @@ export async function POST(req: NextRequest) {
     }
 
     const baseUrl = baseUrlConfig.value;
+
+    const CHUNK_SIZE = 5;
     const results: AccountStatus[] = [];
 
-    for (const account of accounts) {
-      const status = await getAccountStatus(account, baseUrl);
-      results.push(status);
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500 + Math.random() * 500)
+    for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
+      const chunk = accounts.slice(i, i + CHUNK_SIZE);
+
+      const chunkResults = await Promise.allSettled(
+        chunk.map(async (account) => {
+          return getAccountStatus(account, baseUrl);
+        })
       );
+
+      chunkResults.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          results.push(result.value);
+        } else {
+          console.error("Failed to get account status:", result.reason);
+        }
+      });
     }
+    
+
 
     const summary = {
       totalAccounts: results.length,
@@ -268,15 +295,20 @@ export async function GET(request: NextRequest) {
     console.log({ baseUrlConfig: baseUrlConfig.value });
 
     const baseUrl = baseUrlConfig.value;
-    const results: AccountStatus[] = [];
 
-    for (const account of accounts) {
-      const status = await getAccountStatus(account, baseUrl);
-      results.push(status);
-
-      await new Promise((resolve) =>
-        setTimeout(resolve, 500 + Math.random() * 500)
+    const CHUNK_SIZE = 5;
+    const results = [];
+    
+    for (let i = 0; i < accounts.length; i += CHUNK_SIZE) {
+      const chunk = accounts.slice(i, i + CHUNK_SIZE);
+      
+      const chunkResults = await Promise.all(
+        chunk.map(async (account, index) => {
+          return getAccountStatus(account, baseUrl);
+        })
       );
+      
+      results.push(...chunkResults);
     }
 
     const summary = {

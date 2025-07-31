@@ -1,18 +1,20 @@
 import "@/app/globals.css";
 import GlobalLoading from "@/components/GlobalLoading";
 import SessionWrapper from "@/components/SessionWrapper";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/Toaster";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Geist } from "next/font/google";
 
-const geistSans = Geist({
+const geist = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam-pro",
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
 });
 
 export const viewport: Viewport = {
@@ -71,14 +73,16 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${beVietnamPro.variable}  font-sans`}
       >
         <div className="min-h-screen bg-background">
-          <SessionWrapper>
-            {children}
-            <Toaster />
-            <GlobalLoading />
-          </SessionWrapper>
+          <ThemeProvider>
+            <SessionWrapper>
+              {children}
+              <Toaster />
+              <GlobalLoading />
+            </SessionWrapper>
+          </ThemeProvider>
         </div>
       </body>
     </html>

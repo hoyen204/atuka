@@ -163,29 +163,52 @@ export function InventoryTab({
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold text-foreground">Kho đồ</h2>
+        <Button onClick={onRefresh} disabled={isLoading}>
+          <span className="flex items-center gap-2">
+            {isLoading ? "🔄 Đang tải..." : "🔄 Làm mới"}
+          </span>
+        </Button>
+      </div>
+
       {inventory.length === 0 ? (
-        <div className="text-center">Túi đồ trống.</div>
+        <div className="text-center py-16">
+          <div className="text-6xl mb-4">📦</div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">
+            Túi đồ trống
+          </h3>
+          <p className="text-muted-foreground">
+            Không có vật phẩm nào trong kho
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {inventory.map((item: InventoryItem) => (
             <div
               key={item.id}
-              className="border rounded-lg p-4 items-center text-center"
+              className="group border rounded-lg p-4 items-center text-center transition-all duration-300 hover:shadow-lg hover:scale-105"
             >
               <img
                 src={getImageFromType(item.item_type)}
                 alt={item.item_name}
-                className="w-16 h-16 object-cover mb-2 mx-auto"
+                className="w-16 h-16 mx-auto mb-2 transition-all duration-300 group-hover:rotate-10"
               />
-              <h3 className="font-bold">{item.item_name}</h3>
-              <p className="text-sm text-gray-500">Số lượng: {item.quantity}</p>
+              <h3 className="font-bold text-foreground">{item.item_name}</h3>
+              <p className="text-sm text-muted-foreground">
+                Số lượng: <span className="font-bold">{item.quantity}</span>
+              </p>
               {(item.item_type.startsWith("ruong") ||
                 (!item.item_type.startsWith("manh_ruong") &&
                   item.item_type.endsWith("phu"))) && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button className="mt-2">Sử dụng</Button>
+                    <Button className="mt-3">
+                      <span className="flex items-center gap-2">
+                        ✨ Sử dụng
+                      </span>
+                    </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-80">
                     <Label>Số lượng</Label>
@@ -195,10 +218,12 @@ export function InventoryTab({
                       onChange={(e) => setQuantity(Number(e.target.value))}
                     />
                     <Button
-                      className="mt-2 w-full"
+                      className="mt-3 w-full"
                       onClick={() => handleUse(item)}
                     >
-                      Sử dụng
+                      <span className="flex items-center gap-2">
+                        ✨ Sử dụng
+                      </span>
                     </Button>
                   </PopoverContent>
                 </Popover>
@@ -231,15 +256,12 @@ export function InventoryTab({
                     <img
                       src={getImageFromType(item.type)}
                       alt={item.name}
-                      className="w-6 h-6 mx-auto"
+                      className="w-8 h-8 mx-auto"
                     />
                   ) : (
-                    <span>{item.type === "tu_vi" ? "✨" : "💎"}</span>
+                    "🎁"
                   )}
-                  {item.name}{" "}
-                  <span className="text-md text-yellow-500">
-                    x{item.amount}
-                  </span>
+                  {item.name}: {item.amount}
                 </p>
               </div>
             ))}
