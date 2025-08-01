@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/useToast";
 import { useApiClient } from "@/lib/api.utils";
 import {
   BonMenhItem,
@@ -34,6 +33,7 @@ import {
 import { ArrowUpCircle, Dna, Gem, Heart, Loader2, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 interface Account {
   id: string;
@@ -120,7 +120,6 @@ export default function UserShopPage() {
   const [shopData, setShopData] = useState<UserShopExtractedData | null>(null);
   const [ajaxShop, setAjaxShop] = useState<any>(null);
   const api = useApiClient();
-  const toast = useToast();
 
   async function loadShop() {
     try {
@@ -135,11 +134,7 @@ export default function UserShopPage() {
       setShopData(data.shopData);
       setAjaxShop(data.ajaxShop);
     } catch (error: any) {
-      toast.toast({
-        title: "Lỗi",
-        description: error.message || "Không thể tải dữ liệu shop.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Không thể tải dữ liệu shop.");
     } finally {
       setIsDataLoading(false);
       setIsLoading(false);
@@ -152,8 +147,12 @@ export default function UserShopPage() {
       setIsDataLoading(true);
       try {
         const [accRes, proxyRes] = await Promise.all([
-          api.get<{ accounts: Account[] }>("/api/accounts?pageSize=1000", { showLoading: false }),
-          api.get<{ proxies: Proxy[] }>("/api/proxies?limit=1000", { showLoading: false }),
+          api.get<{ accounts: Account[] }>("/api/accounts?pageSize=1000", {
+            showLoading: false,
+          }),
+          api.get<{ proxies: Proxy[] }>("/api/proxies?limit=1000", {
+            showLoading: false,
+          }),
         ]);
         setAccounts(accRes.accounts);
         setProxies(proxyRes.proxies);
@@ -162,11 +161,7 @@ export default function UserShopPage() {
           setSelectedAccount(accRes.accounts[0].id);
         }
       } catch (error) {
-        toast.toast({
-          title: "Lỗi",
-          description: "Không thể tải danh sách tài khoản hoặc proxy.",
-          variant: "destructive",
-        });
+        toast.error("Không thể tải danh sách tài khoản hoặc proxy.");
         console.error("Fetch error:", error);
       } finally {
         setIsDataLoading(false);
@@ -203,24 +198,13 @@ export default function UserShopPage() {
       );
 
       if (response.success) {
-        toast.toast({
-          title: "Thành công",
-          description: response.data.message,
-        });
+        toast.success(response.data.message);
       } else {
-        toast.toast({
-          title: "Lỗi",
-          description: response.data.message,
-          variant: "destructive",
-        });
+        toast.error(response.data.message);
       }
       loadShop();
     } catch (error: any) {
-      toast.toast({
-        title: "Lỗi",
-        description: error.data.message,
-        variant: "destructive",
-      });
+      toast.error(error.data.message);
     } finally {
       setIsLoading(false);
     }
@@ -249,27 +233,16 @@ export default function UserShopPage() {
             { showLoading: false }
           );
           if (response.success) {
-            toast.toast({
-              title: "Thành công",
-              description: response.data.message,
-            });
+            toast.success(response.data.message);
           } else {
-            toast.toast({
-              title: "Lỗi",
-              description: response.data.message,
-              variant: "destructive",
-            });
+            toast.error(response.data.message);
             return;
           }
         }
       }
       loadShop();
     } catch (error: any) {
-      toast.toast({
-        title: "Lỗi",
-        description: error.message || "Không thể mua tất cả.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Không thể mua tất cả.");
     } finally {
       setIsLoading(false);
     }
@@ -280,7 +253,7 @@ export default function UserShopPage() {
     const results = [];
     setIsLoading(true);
     for (const acc of accounts) {
-      
+      toast.info(`[${acc.name}] Bắt đầu xử lý...`);
       try {
         const params = new URLSearchParams({
           accountId: acc.id,
@@ -291,29 +264,71 @@ export default function UserShopPage() {
           ajaxShop: any;
         }>(`/api/user-shop?${params}`, { showLoading: false });
         const items = data.shopData.danDuocItems.filter(
-          (i) => i.actionType === "buy" && i.isEligible
+          (i) =>
+            i.actionType === "buy" &&
+            i.isEligible &&
+            !i.name.includes("Đột Phá Đan")
         );
+
+        if (items.length === 0) {
+          toast.info(`[${acc.name}] Không có đan dược nào hợp lệ để mua.`);
+          continue;
+        }
+
+        items.sort((a, b) => b.price - a.price);
+
         for (const item of items) {
-          await api.post(`/api/user-shop?accountId=${acc.id}&proxyId=random`, {
-            action: item.actionType,
-            itemId: item.id,
-            category: item.category,
-            nonce: data.ajaxShop.nonce,
-            ajaxUrl: data.ajaxShop.ajaxurl,
-          }, { showLoading: false });
+          const quantityToBuy = item.usedCount || 0;
+          for (let i = 0; i < quantityToBuy; i++) {
+            try {
+              const buyRes = await fetch(
+                `/api/user-shop?accountId=${acc.id}&proxyId=${selectedProxy}`,
+                {
+                  method: "POST",
+                  body: JSON.stringify({
+                    action: item.actionType,
+                    itemId: item.id,
+                    category: item.category,
+                    nonce: data.ajaxShop.nonce,
+                    ajaxUrl: data.ajaxShop.ajaxurl,
+                  }),
+                  headers: { "Content-Type": "application/json" },
+                }
+              );
+              const buyData = await buyRes.json();
+              if (buyRes.ok && buyData.success) {
+                toast.success(`[${acc.name}] Đã mua: ${item.name}`);
+              } else {
+                toast.error(
+                  `[${acc.name}] Lỗi khi mua ${item.name}: ${
+                    buyData.data.message || "Lỗi không rõ"
+                  }`
+                );
+                break;
+              }
+            } catch (err: any) {
+              toast.error(
+                `[${acc.name}] Lỗi khi mua ${item.name}: ${err.message}`
+              );
+            }
+          }
         }
         results.push({ account: acc.name, success: true });
       } catch (err: any) {
         results.push({ account: acc.name, success: false, error: err.message });
       }
     }
-    results.forEach((r) =>
-      toast.toast({
-        title: r.success ? "Thành công" : "Lỗi",
-        description: `${r.account}: ${r.success ? "Đã mua tất cả" : r.error}`,
-        variant: r.success ? "default" : "destructive",
-      })
-    );
+
+    const successCount = results.filter((r) => r.success).length;
+    const errorCount = results.filter((r) => !r.success).length;
+    const message = `${successCount} tài khoản đã mua tất cả, ${errorCount} tài khoản có lỗi`;
+    toast.success(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+    });
     if (selectedAccount) loadShop();
     setIsLoading(false);
   };
@@ -352,7 +367,11 @@ export default function UserShopPage() {
     <div className="container mx-auto p-6">
       <div className="flex flex-col md:flex-row gap-4 items-end justify-end mb-4">
         <div className="w-1/6">
-          <Button onClick={handleBuyAllAllAccounts} className="w-full" disabled={isLoading}>
+          <Button
+            onClick={handleBuyAllAllAccounts}
+            className="w-full"
+            disabled={isLoading}
+          >
             Mua Đan Dược Cho Tất Cả
           </Button>
         </div>
@@ -432,7 +451,8 @@ export default function UserShopPage() {
             <TabsContent value="danduoc">
               <Button
                 onClick={() => handleBuyAll(shopData?.danDuocItems || [])}
-                disabled={isLoading ||
+                disabled={
+                  isLoading ||
                   !shopData?.danDuocItems.some(
                     (i) => i.actionType === "buy" && i.isEligible
                   )

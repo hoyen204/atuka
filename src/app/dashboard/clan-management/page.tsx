@@ -348,7 +348,9 @@ const ClanManagementPage = () => {
           detailData.clanDetail?.shopData?.danDuocItems || [];
 
         const itemsToBuy = danDuocItems.filter(
-          (item: any) => item.isEligible && item.usedCount < item.usageLimit
+          (item: any) =>
+            item.isEligible &&
+            item.usedCount < item.usageLimit
         );
 
         itemsToBuy.sort((a: any, b: any) => b.price - a.price);
