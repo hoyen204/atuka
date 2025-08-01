@@ -379,9 +379,10 @@ const ClanManagementPage = () => {
               } else {
                 totalErrors++;
                 toast.error(
-                  `[${account.name}] Lỗi khi mua ${item.name}: ${buyData.message || "Lỗi không rõ"
+                  `[${account.name}] Lỗi khi mua ${item.name}: ${buyData.data.message || "Lỗi không rõ"
                   }`
                 );
+                break;
               }
             } catch (e: any) {
               totalErrors++;

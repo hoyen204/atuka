@@ -365,8 +365,8 @@ export default function UserShopPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <div className="flex flex-col md:flex-row gap-4 items-end justify-end mb-4">
-        <div className="w-1/6">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-4 items-end justify-end mb-4">
+        <div>
           <Button
             onClick={handleBuyAllAllAccounts}
             className="w-full"
@@ -375,7 +375,7 @@ export default function UserShopPage() {
             Mua Đan Dược Cho Tất Cả
           </Button>
         </div>
-        <div className="w-1/6">
+        <div>
           <Select
             onValueChange={setSelectedAccount}
             value={selectedAccount || undefined}
@@ -392,7 +392,7 @@ export default function UserShopPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="w-1/6">
+        <div>
           <Select onValueChange={setSelectedProxy} value={selectedProxy}>
             <SelectTrigger>
               <SelectValue placeholder="Chọn proxy" />
@@ -417,7 +417,7 @@ export default function UserShopPage() {
         )}
         {shopData && !isDataLoading && (
           <Tabs defaultValue="phapbao" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full h-auto grid-cols-3 lg:grid-cols-5">
               <TabsTrigger value="phapbao">
                 <Shield className="w-4 h-4 mr-2" />
                 Pháp Bảo
