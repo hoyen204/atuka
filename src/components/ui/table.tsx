@@ -9,7 +9,7 @@ const Table = React.forwardRef<
   >(({ className, ...props }, ref) => {
   const { isMobile, isTablet, isDesktop } = useResponsive();
   return (
-    <div className={cn("relative w-full overflow-auto", isMobile ? "max-h-[45vh]" : "max-h-[60vh]")}>
+    <div className={cn("relative w-full overflow-auto", isMobile ? "max-h-[45vh]" : "max-h-[50vh]")}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
@@ -33,7 +33,7 @@ const TableHeader = React.forwardRef<
     ref={ref} 
     className={cn(
       "[&_tr]:border-b",
-      sticky && "sticky bg-white z-30 shadow-sm",
+      sticky && "sticky bg-white z-10 shadow-sm",
       className
     )} 
     style={sticky ? { top: stickyTop } : undefined}

@@ -345,7 +345,7 @@ export default function AccountsPage() {
         "Tu vi",
         "Bottleneck Tu vi",
         "Tinh thạch",
-        "Tiên thạch",
+        "Tiên ngọc",
         "Coin",
         "Lock Coin",
       ].join(","),
@@ -561,16 +561,13 @@ export default function AccountsPage() {
     const cultivation = account.cultivation
       ? account.cultivation.toLocaleString()
       : "0";
-    const bottleNeck = account.bootleNeckCultivation
-      ? ` / ${account.bootleNeckCultivation.toLocaleString()}`
-      : "";
     const gem = account.gem ? account.gem.toLocaleString() : "0";
     const fairyGem = account.fairyGem ? account.fairyGem.toLocaleString() : "0";
     const coin = account.coin ? account.coin.toLocaleString() : "0";
     const lockCoin = account.lockCoin ? account.lockCoin.toLocaleString() : "0";
 
     return {
-      cultivation: `${cultivation}${bottleNeck}`,
+      cultivation: `${cultivation}`,
       gem,
       fairyGem,
       coin,
@@ -580,60 +577,470 @@ export default function AccountsPage() {
 
   return (
     <TooltipProvider>
-      <div className={`h-full flex flex-col ${isMobile ? "bg-gray-50" : "p-6"}`}>
+      <div
+        className={`h-full flex flex-col ${isMobile ? "bg-gray-50" : "p-6"}`}
+      >
         {isMobile ? (
           // Mobile layout - no Card
           <div className="flex-1 flex flex-col overflow-hidden bg-white">
             <div className="border-b p-4 flex-shrink-0">
               <h1 className="text-lg font-semibold flex items-center gap-2">
                 <span>Quản lý tài khoản</span>
-                <Badge variant="secondary" className="text-xs">{total}</Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {total}
+                </Badge>
               </h1>
             </div>
             <div className="flex-1 overflow-auto">
-            <div
-              className={`pb-4 border-b mb-4 px-4 pt-4`}
-            >
-              <div className={`flex gap-4 ${isMobile ? "flex-col" : ""}`}>
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder={
-                        isMobile
-                          ? "Tìm kiếm..."
-                          : "Tìm kiếm theo tên, ID hoặc tông môn..."
-                      }
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-10"
-                    />
+              <div className={`pb-4 border-b mb-4 px-4 pt-4`}>
+                <div className={`flex gap-4 ${isMobile ? "flex-col" : ""}`}>
+                  <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
+                    <div className={isMobile ? "w-full" : "w-64"}>
+                      <Select
+                        value={clanFilter}
+                        onValueChange={setClanFilter}
+                        defaultValue="all"
+                      >
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            <Filter className="h-4 w-4 text-gray-400" />
+                            <SelectValue placeholder="Lọc theo tông môn" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tất cả tông môn</SelectItem>
+                          {clans.map((clan) => (
+                            <SelectItem key={clan.clanId} value={clan.clanId}>
+                              {clan.clanName} (ID: {clan.clanId})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {!isMobile && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={isCompactView ? "default" : "outline"}
+                            onClick={() => setIsCompactView(!isCompactView)}
+                            className="h-10 px-4"
+                          >
+                            {isCompactView ? "Mở rộng" : "Thu gọn"}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Chuyển đổi chế độ hiển thị{" "}
+                            {isCompactView ? "mở rộng" : "thu gọn"}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
                 </div>
-                <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
-                  <div className={isMobile ? "w-full" : "w-64"}>
-                    <Select
-                      value={clanFilter}
-                      onValueChange={setClanFilter}
-                      defaultValue="all"
+              </div>
+
+              {
+                <div
+                  className={`top-36 bg-blue-50 z-10 p-3 rounded-md border border-blue-200 mb-4`}
+                >
+                  <div
+                    className={`flex items-center gap-4 ${
+                      isMobile ? "flex-col items-start" : ""
+                    }`}
+                  >
+                    <span className="text-sm font-medium text-blue-700">
+                      Đã chọn {selectedAccounts.length} tài khoản
+                    </span>
+                    <div
+                      className={`flex gap-2 ${
+                        isMobile ? "w-full flex-col" : ""
+                      }`}
                     >
-                      <SelectTrigger className="w-full">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-gray-400" />
-                          <SelectValue placeholder="Lọc theo tông môn" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả tông môn</SelectItem>
-                        {clans.map((clan) => (
-                          <SelectItem key={clan.clanId} value={clan.clanId}>
-                            {clan.clanName} (ID: {clan.clanId})
+                      <Select onValueChange={handleBatchAction} disabled={selectedAccounts.length === 0}>
+                        <SelectTrigger className={isMobile ? "w-full" : "w-48"}>
+                          <div className="flex items-center gap-2">
+                            <ChevronDown className="h-4 w-4" />
+                            <span>Hành động</span>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enable">
+                            <div className="flex items-center gap-2">
+                              <Power className="h-4 w-4 text-green-600" />
+                              <span>Kích hoạt</span>
+                            </div>
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          <SelectItem value="disable">
+                            <div className="flex items-center gap-2">
+                              <PowerOff className="h-4 w-4 text-red-600" />
+                              <span>Tạm dừng</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="mine">
+                            <div className="flex items-center gap-2">
+                              <Mountain className="h-4 w-4 text-amber-600" />
+                              <span>Cập nhật khoáng mạch</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="delete">
+                            <div className="flex items-center gap-2">
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                              <span>Xóa</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="default"
+                            onClick={() => setSelectedAccounts([])}
+                            className={isMobile ? "w-full" : ""}
+                            disabled={selectedAccounts.length === 0}
+                          >
+                            Bỏ chọn tất cả
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Xóa lựa chọn tất cả tài khoản</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
-                  {!isMobile && (
+                </div>
+              }
+
+              <div className="rounded-md border flex-1 flex flex-col">
+                <div className={`flex-1 ${isMobile ? "px-2" : ""}`}>
+                  <Table className={`${isCompactView ? "text-sm" : ""}`}>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Checkbox
+                                checked={
+                                  accounts.length > 0 &&
+                                  selectedAccounts.length === accounts.length
+                                }
+                                onCheckedChange={handleSelectAll}
+                                aria-label="Chọn tất cả"
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Chọn hoặc bỏ chọn tất cả tài khoản</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TableHead>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Tên tài khoản</TableHead>
+                        <TableHead>Tông môn</TableHead>
+                        <TableHead className={isMobile ? "hidden" : ""}>
+                          Thông tin khoáng mạch
+                        </TableHead>
+                        <TableHead className={isMobile ? "hidden" : ""}>
+                          Thống kê tài khoản
+                        </TableHead>
+                        <TableHead className={isMobile ? "hidden" : ""}>
+                          Trạng thái
+                        </TableHead>
+                        <TableHead>Thao tác</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {accounts.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={isMobile ? 5 : 8}
+                            className="text-center py-8"
+                          >
+                            Không có tài khoản nào
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        accounts.map((account) => {
+                          const mineInfo = formatMineInfo(account);
+                          const stats = formatAccountStats(account);
+
+                          return (
+                            <TableRow
+                              key={account.id}
+                              className={isCompactView ? "h-12" : ""}
+                            >
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Checkbox
+                                      checked={selectedAccounts.includes(
+                                        account.id
+                                      )}
+                                      onCheckedChange={(checked) =>
+                                        handleSelectAccount(
+                                          account.id,
+                                          checked as boolean
+                                        )
+                                      }
+                                      aria-label={`Chọn tài khoản ${account.name}`}
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>
+                                      Chọn tài khoản {account.name} để thực hiện
+                                      hành động hàng loạt
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell
+                                className={`font-medium ${
+                                  isCompactView ? "py-2" : ""
+                                }`}
+                              >
+                                {account.id}
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                {account.name}
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                {account.clanName ? (
+                                  <div>
+                                    <div className="font-medium">
+                                      {account.clanName}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      ID: {account.clanId}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">
+                                    Chưa có tông môn
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell
+                                className={`max-w-48 ${
+                                  isCompactView ? "py-2" : ""
+                                } ${isMobile ? "hidden" : ""}`}
+                              >
+                                <div
+                                  className={
+                                    isCompactView ? "space-y-0.5" : "space-y-1"
+                                  }
+                                >
+                                  <div
+                                    className={`font-medium ${
+                                      account.mineId
+                                        ? "text-gray-900"
+                                        : "text-gray-400"
+                                    } ${
+                                      isCompactView ? "text-xs" : ""
+                                    } dark:text-foreground/70`}
+                                  >
+                                    {mineInfo.mineName}
+                                  </div>
+                                  <div
+                                    className={`text-xs text-gray-600 ${
+                                      isCompactView ? "hidden" : ""
+                                    }`}
+                                  >
+                                    {mineInfo.timeRange}
+                                  </div>
+                                  <div
+                                    className={`flex items-center gap-2 ${
+                                      isCompactView ? "hidden" : ""
+                                    }`}
+                                  >
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      Buff: {mineInfo.buffAmount}
+                                    </Badge>
+                                  </div>
+                                  <div
+                                    className={`text-xs text-blue-600 ${
+                                      isCompactView ? "text-[10px]" : ""
+                                    }`}
+                                  >
+                                    {mineInfo.mineTypeText}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={`max-w-40 ${
+                                  isCompactView ? "py-2" : ""
+                                } ${isMobile ? "hidden" : ""}`}
+                              >
+                                <div
+                                  className={
+                                    isCompactView ? "space-y-0" : "space-y-1"
+                                  }
+                                >
+                                  <div
+                                    className={
+                                      isCompactView ? "text-xs" : "text-sm"
+                                    }
+                                  >
+                                    <span className="text-gray-500">
+                                      Tu vi:
+                                    </span>{" "}
+                                    {stats.cultivation}
+                                  </div>
+                                  {!isCompactView && (
+                                    <>
+                                      <div className="text-xs text-gray-600">
+                                        <span className="text-gray-500">
+                                          Tinh thạch:
+                                        </span>{" "}
+                                        {stats.gem}
+                                      </div>
+                                      <div className="text-xs text-gray-600">
+                                        <span className="text-gray-500">
+                                          Tiên ngọc:
+                                        </span>{" "}
+                                        {stats.fairyGem}
+                                      </div>
+                                      <div className="text-xs text-gray-600">
+                                        <span className="text-gray-500">
+                                          Xu:
+                                        </span>{" "}
+                                        {stats.coin}
+                                      </div>
+                                      <div className="text-xs text-gray-600">
+                                        <span className="text-gray-500">
+                                          Xu khóa:
+                                        </span>{" "}
+                                        {stats.lockCoin}
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell
+                                className={`${isCompactView ? "py-2" : ""} ${
+                                  isMobile ? "hidden" : ""
+                                }`}
+                              >
+                                <Badge
+                                  variant={
+                                    account.toggle ? "default" : "secondary"
+                                  }
+                                >
+                                  {account.toggle ? "Running" : "Stop"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell
+                                className={isCompactView ? "py-2" : ""}
+                              >
+                                <div
+                                  className={`flex gap-2 ${
+                                    isCompactView ? "gap-1" : ""
+                                  }`}
+                                >
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          copyToClipboard(
+                                            account.cookie,
+                                            "cookie"
+                                          )
+                                        }
+                                      >
+                                        <Copy className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Copy cookie</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleEditAccount(account)
+                                        }
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Chỉnh sửa khoáng mạch</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              <div className={`${isMobile ? "p-4" : ""} mt-4 flex-shrink-0`}>
+                <PaginationComponent
+                  currentPage={page}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  total={total}
+                  onPageChange={setPage}
+                  onPageSizeChange={(newPageSize) => {
+                    setPageSize(newPageSize);
+                    setPage(1);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Desktop layout - with Card
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            <CardHeader className="border-b flex-shrink-0">
+              <CardTitle className="flex items-center gap-2">
+                <span>Quản lý tài khoản</span>
+                <Badge variant="secondary">{total} tài khoản</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 p-6">
+              <div className="pb-4 border-b mb-4">
+                <div className="flex gap-4 pt-4">
+                  <div className="flex gap-2">
+                    <div className="w-64">
+                      <Select
+                        value={clanFilter}
+                        onValueChange={setClanFilter}
+                        defaultValue="all"
+                      >
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            <Filter className="h-4 w-4 text-gray-400" />
+                            <SelectValue placeholder="Lọc theo tông môn" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tất cả tông môn</SelectItem>
+                          {clans.map((clan) => (
+                            <SelectItem key={clan.clanId} value={clan.clanId}>
+                              {clan.clanName} (ID: {clan.clanId})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -651,84 +1058,72 @@ export default function AccountsPage() {
                         </p>
                       </TooltipContent>
                     </Tooltip>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {selectedAccounts.length > 0 && (
-              <div
-                className={`top-36 bg-blue-50 z-10 p-3 rounded-md border border-blue-200 mb-4`}
-              >
-                <div
-                  className={`flex items-center gap-4 ${
-                    isMobile ? "flex-col items-start" : ""
-                  }`}
-                >
-                  <span className="text-sm font-medium text-blue-700">
-                    Đã chọn {selectedAccounts.length} tài khoản
-                  </span>
-                  <div
-                    className={`flex gap-2 ${
-                      isMobile ? "w-full flex-col" : ""
-                    }`}
-                  >
-                    <Select onValueChange={handleBatchAction}>
-                      <SelectTrigger className={isMobile ? "w-full" : "w-48"}>
-                        <div className="flex items-center gap-2">
-                          <ChevronDown className="h-4 w-4" />
-                          <span>Hành động</span>
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="enable">
-                          <div className="flex items-center gap-2">
-                            <Power className="h-4 w-4 text-green-600" />
-                            <span>Kích hoạt</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="disable">
-                          <div className="flex items-center gap-2">
-                            <PowerOff className="h-4 w-4 text-red-600" />
-                            <span>Tạm dừng</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="mine">
-                          <div className="flex items-center gap-2">
-                            <Mountain className="h-4 w-4 text-amber-600" />
-                            <span>Cập nhật khoáng mạch</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="delete">
-                          <div className="flex items-center gap-2">
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                            <span>Xóa</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="default"
-                          onClick={() => setSelectedAccounts([])}
-                          className={isMobile ? "w-full" : ""}
-                        >
-                          Bỏ chọn tất cả
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Xóa lựa chọn tất cả tài khoản</p>
-                      </TooltipContent>
-                    </Tooltip>
                   </div>
                 </div>
               </div>
-            )}
 
-            <div className="rounded-md border flex-1 flex flex-col">
-              <div className={`flex-1 ${isMobile ? "px-2" : ""}`}>
+              {
+                <div className="bg-blue-50 z-10 p-3 rounded-md border border-blue-200 mb-4">
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-medium text-blue-700">
+                      Đã chọn {selectedAccounts.length} tài khoản
+                    </span>
+                    <div className="flex gap-2">
+                      <Select onValueChange={handleBatchAction} disabled={selectedAccounts.length === 0}>
+                        <SelectTrigger className="w-48">
+                          <div className="flex items-center gap-2">
+                            <ChevronDown className="h-4 w-4" />
+                            <span>Hành động</span>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="enable">
+                            <div className="flex items-center gap-2">
+                              <Power className="h-4 w-4 text-green-600" />
+                              <span>Kích hoạt</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="disable">
+                            <div className="flex items-center gap-2">
+                              <PowerOff className="h-4 w-4 text-red-600" />
+                              <span>Tạm dừng</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="mine">
+                            <div className="flex items-center gap-2">
+                              <Mountain className="h-4 w-4 text-amber-600" />
+                              <span>Cập nhật khoáng mạch</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="delete">
+                            <div className="flex items-center gap-2">
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                              <span>Xóa</span>
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="default"
+                            onClick={() => setSelectedAccounts([])}
+                            disabled={selectedAccounts.length === 0}
+                          >
+                            Bỏ chọn tất cả
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Xóa lựa chọn tất cả tài khoản</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <div className="rounded-md border">
                 <Table className={`${isCompactView ? "text-sm" : ""}`}>
                   <TableHeader>
                     <TableRow>
@@ -752,25 +1147,16 @@ export default function AccountsPage() {
                       <TableHead>ID</TableHead>
                       <TableHead>Tên tài khoản</TableHead>
                       <TableHead>Tông môn</TableHead>
-                      <TableHead className={isMobile ? "hidden" : ""}>
-                        Thông tin khoáng mạch
-                      </TableHead>
-                      <TableHead className={isMobile ? "hidden" : ""}>
-                        Thống kê tài khoản
-                      </TableHead>
-                      <TableHead className={isMobile ? "hidden" : ""}>
-                        Trạng thái
-                      </TableHead>
+                      <TableHead>Thông tin khoáng mạch</TableHead>
+                      <TableHead>Thống kê tài khoản</TableHead>
+                      <TableHead>Trạng thái</TableHead>
                       <TableHead>Thao tác</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {accounts.length === 0 ? (
                       <TableRow>
-                        <TableCell
-                          colSpan={isMobile ? 5 : 8}
-                          className="text-center py-8"
-                        >
+                        <TableCell colSpan={8} className="text-center py-8">
                           Không có tài khoản nào
                         </TableCell>
                       </TableRow>
@@ -837,7 +1223,7 @@ export default function AccountsPage() {
                             <TableCell
                               className={`max-w-48 ${
                                 isCompactView ? "py-2" : ""
-                              } ${isMobile ? "hidden" : ""}`}
+                              }`}
                             >
                               <div
                                 className={
@@ -849,7 +1235,9 @@ export default function AccountsPage() {
                                     account.mineId
                                       ? "text-gray-900"
                                       : "text-gray-400"
-                                  } ${isCompactView ? "text-xs" : ""}`}
+                                  } ${
+                                    isCompactView ? "text-xs" : ""
+                                  } dark:text-foreground/70`}
                                 >
                                   {mineInfo.mineName}
                                 </div>
@@ -881,7 +1269,7 @@ export default function AccountsPage() {
                             <TableCell
                               className={`max-w-40 ${
                                 isCompactView ? "py-2" : ""
-                              } ${isMobile ? "hidden" : ""}`}
+                              }`}
                             >
                               <div
                                 className={
@@ -906,7 +1294,7 @@ export default function AccountsPage() {
                                     </div>
                                     <div className="text-xs text-gray-600">
                                       <span className="text-gray-500">
-                                        Tiên thạch:
+                                        Tiên ngọc:
                                       </span>{" "}
                                       {stats.fairyGem}
                                     </div>
@@ -925,9 +1313,7 @@ export default function AccountsPage() {
                               </div>
                             </TableCell>
                             <TableCell
-                              className={`${isCompactView ? "py-2" : ""} ${
-                                isMobile ? "hidden" : ""
-                              }`}
+                              className={`${isCompactView ? "py-2" : ""}`}
                             >
                               <Badge
                                 variant={
@@ -954,323 +1340,6 @@ export default function AccountsPage() {
                                           "cookie"
                                         )
                                       }
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Copy cookie</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleEditAccount(account)}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Chỉnh sửa khoáng mạch</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            <div className={`${isMobile ? "p-4" : ""} mt-4 flex-shrink-0`}>
-              <PaginationComponent
-                currentPage={page}
-                totalPages={totalPages}
-                pageSize={pageSize}
-                total={total}
-                onPageChange={setPage}
-                onPageSizeChange={(newPageSize) => {
-                  setPageSize(newPageSize);
-                  setPage(1);
-                }}
-              />
-            </div>
-            </div>
-          </div>
-        ) : (
-          // Desktop layout - with Card
-          <Card className="flex-1 flex flex-col overflow-hidden">
-            <CardHeader className="border-b flex-shrink-0">
-              <CardTitle className="flex items-center gap-2">
-                <span>Quản lý tài khoản</span>
-                <Badge variant="secondary">{total} tài khoản</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 p-6">
-              <div className="pb-4 border-b mb-4">
-                <div className="flex gap-4 pt-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Tìm kiếm theo tên, ID hoặc tông môn..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="w-64">
-                      <Select
-                        value={clanFilter}
-                        onValueChange={setClanFilter}
-                        defaultValue="all"
-                      >
-                        <SelectTrigger className="w-full">
-                          <div className="flex items-center gap-2">
-                            <Filter className="h-4 w-4 text-gray-400" />
-                            <SelectValue placeholder="Lọc theo tông môn" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tất cả tông môn</SelectItem>
-                          {clans.map((clan) => (
-                            <SelectItem key={clan.clanId} value={clan.clanId}>
-                              {clan.clanName} (ID: {clan.clanId})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={isCompactView ? "default" : "outline"}
-                          onClick={() => setIsCompactView(!isCompactView)}
-                          className="h-10 px-4"
-                        >
-                          {isCompactView ? "Mở rộng" : "Thu gọn"}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Chuyển đổi chế độ hiển thị{" "}
-                          {isCompactView ? "mở rộng" : "thu gọn"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-
-              {selectedAccounts.length > 0 && (
-                <div className="bg-blue-50 z-10 p-3 rounded-md border border-blue-200 mb-4">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-blue-700">
-                      Đã chọn {selectedAccounts.length} tài khoản
-                    </span>
-                    <div className="flex gap-2">
-                      <Select onValueChange={handleBatchAction}>
-                        <SelectTrigger className="w-48">
-                          <div className="flex items-center gap-2">
-                            <ChevronDown className="h-4 w-4" />
-                            <span>Hành động</span>
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="enable">
-                            <div className="flex items-center gap-2">
-                              <Power className="h-4 w-4 text-green-600" />
-                              <span>Kích hoạt</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="disable">
-                            <div className="flex items-center gap-2">
-                              <PowerOff className="h-4 w-4 text-red-600" />
-                              <span>Tạm dừng</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="mine">
-                            <div className="flex items-center gap-2">
-                              <Mountain className="h-4 w-4 text-amber-600" />
-                              <span>Cập nhật khoáng mạch</span>
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="delete">
-                            <div className="flex items-center gap-2">
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                              <span>Xóa</span>
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="default"
-                            onClick={() => setSelectedAccounts([])}
-                          >
-                            Bỏ chọn tất cả
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Xóa lựa chọn tất cả tài khoản</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-md border">
-                <Table className={`${isCompactView ? "text-sm" : ""}`}>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Checkbox
-                              checked={
-                                accounts.length > 0 &&
-                                selectedAccounts.length === accounts.length
-                              }
-                              onCheckedChange={handleSelectAll}
-                              aria-label="Chọn tất cả"
-                            />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Chọn hoặc bỏ chọn tất cả tài khoản</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TableHead>
-                      <TableHead>ID</TableHead>
-                      <TableHead>Tên tài khoản</TableHead>
-                      <TableHead>Tông môn</TableHead>
-                      <TableHead>Thông tin khoáng mạch</TableHead>
-                      <TableHead>Thống kê tài khoản</TableHead>
-                      <TableHead>Trạng thái</TableHead>
-                      <TableHead>Thao tác</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {accounts.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8">
-                          Không có tài khoản nào
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      accounts.map((account) => {
-                        const mineInfo = formatMineInfo(account);
-                        const stats = formatAccountStats(account);
-
-                        return (
-                          <TableRow
-                            key={account.id}
-                            className={isCompactView ? "h-12" : ""}
-                          >
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Checkbox
-                                    checked={selectedAccounts.includes(account.id)}
-                                    onCheckedChange={(checked) =>
-                                      handleSelectAccount(account.id, checked as boolean)
-                                    }
-                                    aria-label={`Chọn tài khoản ${account.name}`}
-                                  />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>
-                                    Chọn tài khoản {account.name} để thực hiện
-                                    hành động hàng loạt
-                                  </p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell className={`font-medium ${isCompactView ? "py-2" : ""}`}>
-                              {account.id}
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              {account.name}
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              {account.clanName ? (
-                                <div>
-                                  <div className="font-medium">{account.clanName}</div>
-                                  <div className="text-xs text-gray-500">
-                                    ID: {account.clanId}
-                                  </div>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400">Chưa có tông môn</span>
-                              )}
-                            </TableCell>
-                            <TableCell className={`max-w-48 ${isCompactView ? "py-2" : ""}`}>
-                              <div className={isCompactView ? "space-y-0.5" : "space-y-1"}>
-                                <div
-                                  className={`font-medium ${
-                                    account.mineId ? "text-gray-900" : "text-gray-400"
-                                  } ${isCompactView ? "text-xs" : ""}`}
-                                >
-                                  {mineInfo.mineName}
-                                </div>
-                                <div className={`text-xs text-gray-600 ${isCompactView ? "hidden" : ""}`}>
-                                  {mineInfo.timeRange}
-                                </div>
-                                <div className={`flex items-center gap-2 ${isCompactView ? "hidden" : ""}`}>
-                                  <Badge variant="outline" className="text-xs">
-                                    Buff: {mineInfo.buffAmount}
-                                  </Badge>
-                                </div>
-                                <div className={`text-xs text-blue-600 ${isCompactView ? "text-[10px]" : ""}`}>
-                                  {mineInfo.mineTypeText}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className={`max-w-40 ${isCompactView ? "py-2" : ""}`}>
-                              <div className={isCompactView ? "space-y-0" : "space-y-1"}>
-                                <div className={isCompactView ? "text-xs" : "text-sm"}>
-                                  <span className="text-gray-500">Tu vi:</span> {stats.cultivation}
-                                </div>
-                                {!isCompactView && (
-                                  <>
-                                    <div className="text-xs text-gray-600">
-                                      <span className="text-gray-500">Tinh thạch:</span> {stats.gem}
-                                    </div>
-                                    <div className="text-xs text-gray-600">
-                                      <span className="text-gray-500">Tiên thạch:</span> {stats.fairyGem}
-                                    </div>
-                                    <div className="text-xs text-gray-600">
-                                      <span className="text-gray-500">Xu:</span> {stats.coin}
-                                    </div>
-                                    <div className="text-xs text-gray-600">
-                                      <span className="text-gray-500">Xu khóa:</span> {stats.lockCoin}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell className={`${isCompactView ? "py-2" : ""}`}>
-                              <Badge variant={account.toggle ? "default" : "secondary"}>
-                                {account.toggle ? "Running" : "Stop"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className={isCompactView ? "py-2" : ""}>
-                              <div className={`flex gap-2 ${isCompactView ? "gap-1" : ""}`}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => copyToClipboard(account.cookie, "cookie")}
                                     >
                                       <Copy className="h-4 w-4" />
                                     </Button>
