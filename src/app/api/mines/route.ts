@@ -10,6 +10,9 @@ export async function GET() {
   }
 
   try {
+    const userId = session.user.id;
+
+    // Get all mines
     const mines = await prisma.mine.findMany({
       select: {
         id: true,
@@ -20,9 +23,23 @@ export async function GET() {
       orderBy: { name: 'asc' }
     });
 
-    return NextResponse.json({ mines });
+    // Get user's favorite mines
+    const favorites = await prisma.userFavoriteMine.findMany({
+      where: { userId },
+      select: { mineId: true }
+    });
+
+    const favoriteMineIds = new Set(favorites.map(fav => fav.mineId));
+
+    // Add isFavorited field to each mine
+    const minesWithFavorites = mines.map(mine => ({
+      ...mine,
+      isFavorited: favoriteMineIds.has(mine.id)
+    }));
+
+    return NextResponse.json({ mines: minesWithFavorites });
   } catch (error) {
     console.error('Error fetching mines:', error);
     return NextResponse.json({ error: 'Failed to fetch mines' }, { status: 500 });
   }
-} 
+}

@@ -17,10 +17,12 @@ import {
   Home,
   LogOut,
   Menu,
+  Moon,
   Server,
   Settings,
   Shield,
   ShoppingBag,
+  Sun,
   Swords,
   TestTube,
   Trash2,
@@ -29,10 +31,35 @@ import {
   X,
   Zap
 } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      title={`Chuyển sang chế độ ${theme === "light" ? "tối" : "sáng"}`}
+      className="h-9 w-9"
+    >
+      {theme === "light" ? (
+        <Moon className="h-4 w-4" />
+      ) : (
+        <Sun className="h-4 w-4" />
+      )}
+    </Button>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -243,6 +270,7 @@ export default function DashboardLayout({
             <Button variant="ghost" size="icon" className="touch-target">
               <Bell className="w-5 h-5" />
             </Button>
+            <ThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="touch-target">

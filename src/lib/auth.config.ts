@@ -9,9 +9,9 @@ export const authOptions: NextAuthOptions = {
       name: 'credentials',
       credentials: {
         identifier: { 
-          label: 'Email hoặc Zalo ID', 
+          label: 'Username hoặc Zalo ID ', 
           type: 'text',
-          placeholder: 'email@example.com hoặc zalo_id'
+          placeholder: 'username hoặc zalo_id '
         },
         password: { 
           label: 'Mật khẩu', 
@@ -28,15 +28,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const isEmail = credentials.identifier.includes('@');
-          const whereClause = isEmail 
-            ? { email: credentials.identifier }
-            : { zalo_id: credentials.identifier };
-
+          console.log
           const user = await prisma.user.findFirst({
-            where: isEmail 
-              ? { email: credentials.identifier }
-              : { zaloId: credentials.identifier }
+            where: {
+              OR: [
+                { zaloId: credentials.identifier },
+                { username: credentials.identifier }
+              ]
+            }
           });
 
           if (!user) {

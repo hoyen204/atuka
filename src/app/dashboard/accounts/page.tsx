@@ -42,6 +42,7 @@ import {
   Copy,
   Edit,
   Filter,
+  Heart,
   Mountain,
   Power,
   PowerOff,
@@ -77,6 +78,7 @@ interface Mine {
   name: string;
   type: string;
   isPeaceful: boolean;
+  isFavorited?: boolean;
 }
 
 interface Clan {
@@ -160,6 +162,48 @@ export default function AccountsPage() {
     }
   };
 
+  const toggleFavoriteMine = async (mineId: number, isCurrentlyFavorited: boolean) => {
+    try {
+      if (isCurrentlyFavorited) {
+        // Remove from favorites
+        await api.delete(`/api/mines/favorites?mineId=${mineId}`, {
+          loadingText: "Đang xóa khỏi danh sách yêu thích...",
+          showLoading: false,
+        });
+      } else {
+        // Add to favorites
+        await api.post("/api/mines/favorites", { mineId }, {
+          loadingText: "Đang thêm vào danh sách yêu thích...",
+          showLoading: false,
+        });
+      }
+
+      // Update local state
+      setMines(prevMines =>
+        prevMines.map(mine =>
+          mine.id === mineId
+            ? { ...mine, isFavorited: !isCurrentlyFavorited }
+            : mine
+        )
+      );
+
+      toast({
+        title: "Thành công",
+        description: isCurrentlyFavorited
+          ? "Đã xóa khỏi danh sách yêu thích"
+          : "Đã thêm vào danh sách yêu thích",
+        type: "success",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Có lỗi xảy ra khi cập nhật yêu thích",
+        variant: "destructive",
+        type: "error",
+      });
+    }
+  };
+
   const fetchClans = async () => {
     try {
       const data: ClansResponse = await api.get("/api/accounts/clans", {
@@ -239,7 +283,7 @@ export default function AccountsPage() {
     if (!mineId || mineId === "none") return "Chưa thiết lập";
     const mine = mines.find((m) => m.id.toString() === mineId);
     return mine
-      ? `${mine.name} (${
+      ? `${mine.isFavorited ? "❤️ " : ""}${mine.name} (${
           mine.type === "gold"
             ? "Thượng"
             : mine.type === "silver"
@@ -1409,25 +1453,99 @@ export default function AccountsPage() {
                   <SelectContent>
                     <SelectItem value="none">Không chọn</SelectItem>
                     {mines
-                      .sort((a, b) => (a.isPeaceful ? 1 : -1))
+                      .sort((a, b) => {
+                        // Sort by favorite status first, then by peaceful status
+                        if (a.isFavorited && !b.isFavorited) return -1;
+                        if (!a.isFavorited && b.isFavorited) return 1;
+                        if (a.isPeaceful && !b.isPeaceful) return 1;
+                        if (!a.isPeaceful && b.isPeaceful) return -1;
+                        return a.name.localeCompare(b.name);
+                      })
                       .map((mine) => (
-                        <SelectItem
-                          key={mine.id}
-                          value={mine.id.toString()}
-                          className={`${mine.isPeaceful && "font-bold"}`}
-                        >
-                          {mine.name} (
-                          {mine.type === "gold"
-                            ? "Thượng"
-                            : mine.type === "silver"
-                            ? "Trung"
-                            : "Hạ"}
-                          )
-                        </SelectItem>
+                        <div key={mine.id} className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <div className="flex items-center gap-2 flex-1">
+                            <SelectItem
+                              value={mine.id.toString()}
+                              className={`${mine.isPeaceful && "font-bold"} flex-1 border-none bg-transparent p-0 h-auto cursor-pointer`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {mine.isFavorited && (
+                                  <Heart className="h-4 w-4 text-red-500 fill-current" />
+                                )}
+                                <span>
+                                  {mine.name} (
+                                  {mine.type === "gold"
+                                    ? "Thượng"
+                                    : mine.type === "silver"
+                                    ? "Trung"
+                                    : "Hạ"}
+                                  )
+                                </span>
+                              </div>
+                            </SelectItem>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 hover:bg-transparent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavoriteMine(mine.id, mine.isFavorited || false);
+                            }}
+                          >
+                            <Heart
+                              className={`h-4 w-4 ${
+                                mine.isFavorited
+                                  ? "text-red-500 fill-current"
+                                  : "text-gray-400 hover:text-red-500"
+                              }`}
+                            />
+                          </Button>
+                        </div>
                       ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Favorite Toggle Section */}
+              {editForm.mineId && editForm.mineId !== "none" && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                  <div className="flex items-center gap-2">
+                    <Heart
+                      className={`h-5 w-5 ${
+                        mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
+                          ? "text-red-500 fill-current"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    <span className="text-sm font-medium">
+                      {mines.find(m => m.id.toString() === editForm.mineId)?.name}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const mine = mines.find(m => m.id.toString() === editForm.mineId);
+                      if (mine) {
+                        toggleFavoriteMine(mine.id, mine.isFavorited || false);
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${
+                        mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
+                          ? "text-red-500 fill-current"
+                          : "text-gray-400"
+                      }`}
+                    />
+                    {mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
+                      ? "Bỏ yêu thích"
+                      : "Thêm yêu thích"}
+                  </Button>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="startTime">Thời gian bắt đầu</Label>
@@ -1550,21 +1668,57 @@ export default function AccountsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Không chọn</SelectItem>
-                    {mines.map((mine) => (
-                      <SelectItem
-                        key={mine.id}
-                        value={mine.id.toString()}
-                        className={`${mine.isPeaceful && "font-bold"}`}
-                      >
-                        {mine.name} (
-                        {mine.type === "gold"
-                          ? "Thượng"
-                          : mine.type === "silver"
-                          ? "Trung"
-                          : "Hạ"}
-                        )
-                      </SelectItem>
-                    ))}
+                    {mines
+                      .sort((a, b) => {
+                        // Sort by favorite status first, then by peaceful status
+                        if (a.isFavorited && !b.isFavorited) return -1;
+                        if (!a.isFavorited && b.isFavorited) return 1;
+                        if (a.isPeaceful && !b.isPeaceful) return 1;
+                        if (!a.isPeaceful && b.isPeaceful) return -1;
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map((mine) => (
+                        <div key={mine.id} className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                          <div className="flex items-center gap-2 flex-1">
+                            <SelectItem
+                              value={mine.id.toString()}
+                              className={`${mine.isPeaceful && "font-bold"} flex-1 border-none bg-transparent p-0 h-auto cursor-pointer`}
+                            >
+                              <div className="flex items-center gap-2">
+                                {mine.isFavorited && (
+                                  <Heart className="h-4 w-4 text-red-500 fill-current" />
+                                )}
+                                <span>
+                                  {mine.name} (
+                                  {mine.type === "gold"
+                                    ? "Thượng"
+                                    : mine.type === "silver"
+                                    ? "Trung"
+                                    : "Hạ"}
+                                  )
+                                </span>
+                              </div>
+                            </SelectItem>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 hover:bg-transparent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavoriteMine(mine.id, mine.isFavorited || false);
+                            }}
+                          >
+                            <Heart
+                              className={`h-4 w-4 ${
+                                mine.isFavorited
+                                  ? "text-red-500 fill-current"
+                                  : "text-gray-400 hover:text-red-500"
+                              }`}
+                            />
+                          </Button>
+                        </div>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

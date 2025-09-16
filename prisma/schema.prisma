@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
@@ -10,28 +10,30 @@ datasource db {
 
 // User model - main user accounts
 model User {
-  name                  String
-  zaloId                String   @id @map("zalo_id") @db.VarChar(255)
-  licenseType           LicenseType @map("license_type")
-  licenseExpired        DateTime?   @map("license_expired")
-  email                 String?     @unique @db.VarChar(255)
-  password              String?     @db.VarChar(255)
-  createdAt             DateTime    @default(now()) @map("created_at")
-  updatedAt             DateTime    @updatedAt @map("updated_at")
-  isAdmin               Boolean     @default(false) @map("is_admin")
-  isSubscribed          Boolean     @default(false) @map("is_subscribed")
-  accountPlus           Int         @default(0) @map("account_plus")
-  accountPlusExpired    DateTime?   @map("account_plus_expired")
-  canTakeover           Boolean     @default(false) @map("can_takeover")
-  banned                Boolean     @default(false)
+  name               String
+  zaloId             String      @id @map("zalo_id") @db.VarChar(255)
+  licenseType        LicenseType @map("license_type")
+  licenseExpired     DateTime?   @map("license_expired")
+  email              String?     @unique @db.VarChar(255)
+  password           String?     @db.VarChar(255)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  isAdmin            Boolean     @default(false) @map("is_admin")
+  isSubscribed       Boolean     @default(false) @map("is_subscribed")
+  accountPlus        Int         @default(0) @map("account_plus")
+  accountPlusExpired DateTime?   @map("account_plus_expired")
+  canTakeover        Boolean     @default(false) @map("can_takeover")
+  banned             Boolean     @default(false)
+  username           String?     @db.VarChar(255)
 
   // Relations
-  accounts              Account[]
-  proxies               Proxy[]
-  deletedProxies        DeletedProxy[]
+  accounts       Account[]
+  proxies        Proxy[]
+  deletedProxies DeletedProxy[]
+  favoriteMines  UserFavoriteMine[]
 
-  @@map("users")
   @@index([zaloId])
+  @@map("users")
 }
 
 // Account model - game accounts
@@ -71,126 +73,146 @@ model Account {
   mineType              MineType? @default(full) @map("mineType")
 
   // Relations
-  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
-  weddingReceived       WeddingReceived[]
+  creator         User              @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  weddingReceived WeddingReceived[]
 
-  @@map("accounts")
   @@index([toggle])
   @@index([securityUpdatedAt])
   @@index([cultivation])
   @@index([creatorId])
+  @@map("accounts")
 }
 
 // Clan questions for automation
 model ClanQuestion {
-  id                    Int       @id @default(autoincrement())
-  question              String    @db.VarChar(255)
-  answer                String    @db.Text
-  createdAt             DateTime  @default(now()) @map("createdAt")
-  updatedAt             DateTime  @updatedAt @map("updatedAt")
-  questionId            Int?      @map("questionId")
+  id         Int      @id @default(autoincrement())
+  question   String   @db.VarChar(255)
+  answer     String   @db.Text
+  createdAt  DateTime @default(now()) @map("createdAt")
+  updatedAt  DateTime @updatedAt @map("updatedAt")
+  questionId Int?     @map("questionId")
 
   @@map("clan_questions")
 }
 
 model ClanQuestionVanDap {
-  id                    Int       @id @default(autoincrement())
-  question              String    @db.VarChar(255)
-  answer                String    @db.Text
-  createdAt             DateTime  @default(now()) @map("createdAt")
-  updatedAt             DateTime  @updatedAt @map("updatedAt")
-  questionId            Int?      @map("questionId")
+  id         Int      @id @default(autoincrement())
+  question   String   @db.VarChar(255)
+  answer     String   @db.Text
+  createdAt  DateTime @default(now()) @map("createdAt")
+  updatedAt  DateTime @updatedAt @map("updatedAt")
+  questionId Int?     @map("questionId")
 
   @@map("clan_questions_van_dap")
 }
 
 // Clan information
 model Clan {
-  id                    Int       @id
-  name                  String    @db.VarChar(255)
-  level                 Int
-  leader                String    @db.VarChar(255)
-  leaderId              Int       @map("leader_id")
-  memberCount           Int       @map("member_count")
-  memberLimit           Int       @map("member_limit")
+  id          Int    @id
+  name        String @db.VarChar(255)
+  level       Int
+  leader      String @db.VarChar(255)
+  leaderId    Int    @map("leader_id")
+  memberCount Int    @map("member_count")
+  memberLimit Int    @map("member_limit")
 
   @@map("clans")
 }
 
 // Configuration settings
 model Config {
-  key                   String    @id @db.VarChar(255)
-  value                 String    @db.VarChar(255)
+  key   String @id @db.VarChar(255)
+  value String @db.VarChar(255)
 
   @@map("configs")
 }
 
 // Mine locations
 model Mine {
-  id                    Int       @id
-  name                  String    @db.VarChar(255)
-  isPeaceful            Boolean   @map("isPeaceful")
-  updatedAt             DateTime  @updatedAt @map("updatedAt")
-  createdAt             DateTime  @default(now()) @map("createdAt")
-  type                  MineResourceType
+  id         Int              @id
+  name       String           @db.VarChar(255)
+  isPeaceful Boolean          @map("isPeaceful")
+  updatedAt  DateTime         @updatedAt @map("updatedAt")
+  createdAt  DateTime         @default(now()) @map("createdAt")
+  type       MineResourceType
+
+  // Relations
+  favoritedBy UserFavoriteMine[]
 
   @@map("mines")
 }
 
-// Proxy management
-model Proxy {
-  id                    Int       @id @default(autoincrement())
-  host                  String    @db.VarChar(255)
-  port                  Int
-  username              String?   @db.VarChar(255)
-  password              String?   @db.VarChar(255)
-  enabled               Boolean   @default(true)
-  creatorId             String    @map("creator_id") @db.VarChar(255)
+// User favorite mines
+model UserFavoriteMine {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id") @db.VarChar(255)
+  mineId    Int      @map("mine_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
+  user User @relation(fields: [userId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  mine Mine @relation(fields: [mineId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@map("proxies")
+  @@unique([userId, mineId])
+  @@index([userId])
+  @@index([mineId])
+  @@map("user_favorite_mines")
+}
+
+// Proxy management
+model Proxy {
+  id        Int     @id @default(autoincrement())
+  host      String  @db.VarChar(255)
+  port      Int
+  username  String? @db.VarChar(255)
+  password  String? @db.VarChar(255)
+  enabled   Boolean @default(true)
+  creatorId String  @map("creator_id") @db.VarChar(255)
+
+  // Relations
+  creator User @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
+
   @@index([creatorId])
+  @@map("proxies")
 }
 
 model DeletedProxy {
-  id                    Int       @id @default(autoincrement())
-  host                  String    @db.VarChar(255)
-  port                  Int
-  username              String?   @db.VarChar(255)
-  password              String?   @db.VarChar(255)
-  enabled               Boolean   @default(true)
-  creatorId             String    @map("creator_id") @db.VarChar(255)
-  createdAt             DateTime  @default(now()) @map("created_at")
+  id        Int      @id @default(autoincrement())
+  host      String   @db.VarChar(255)
+  port      Int
+  username  String?  @db.VarChar(255)
+  password  String?  @db.VarChar(255)
+  enabled   Boolean  @default(true)
+  creatorId String   @map("creator_id") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  creator               User      @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
+  creator User @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
 
-  @@map("deleted_proxies")
   @@index([creatorId])
+  @@map("deleted_proxies")
 }
 
 // Wedding gift tracking
 model WeddingReceived {
-  id                    Int       @id @default(autoincrement())
-  accountId             Int       @map("accountId")
-  roomId                String    @map("roomId") @db.VarChar(255)
-  message               String    @db.VarChar(255)
-  createdAt             DateTime  @default(now()) @map("createdAt")
-  updatedAt             DateTime  @updatedAt @map("updatedAt")
-  accountName           String    @map("accountName") @db.VarChar(255)
-  accountCreatorId      String    @map("accountCreatorId") @db.VarChar(255)
-  amount                Int
-  type                  WeddingGiftType
+  id               Int             @id @default(autoincrement())
+  accountId        Int             @map("accountId")
+  roomId           String          @map("roomId") @db.VarChar(255)
+  message          String          @db.VarChar(255)
+  createdAt        DateTime        @default(now()) @map("createdAt")
+  updatedAt        DateTime        @updatedAt @map("updatedAt")
+  accountName      String          @map("accountName") @db.VarChar(255)
+  accountCreatorId String          @map("accountCreatorId") @db.VarChar(255)
+  amount           Int
+  type             WeddingGiftType
 
   // Relations
-  account               Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  @@map("wedding_received")
   @@index([accountId])
   @@index([roomId])
   @@index([createdAt])
+  @@map("wedding_received")
 }
 
 // Enums
@@ -213,9 +235,9 @@ enum MineResourceType {
 }
 
 enum WeddingGiftType {
-  TienNgoc @map("Tiên Ngọc")
-  TuVi     @map("Tu Vi")
+  TienNgoc  @map("Tiên Ngọc")
+  TuVi      @map("Tu Vi")
   TinhThach @map("Tinh Thạch")
-  Xu       @map("Xu")
-  XuKhoa   @map("Xu Khóa")
+  Xu        @map("Xu")
+  XuKhoa    @map("Xu Khóa")
 }
