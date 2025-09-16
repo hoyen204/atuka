@@ -312,6 +312,7 @@ const ClanManagementPage = () => {
         } catch (e: any) {
           errorCount++;
           toast.error(`Lỗi khi mua ${item.name}: ${e.message}`);
+          break;
         }
         // Add a small delay between requests
         await new Promise((resolve) => setTimeout(resolve, 500));
