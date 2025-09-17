@@ -14,7 +14,7 @@ model User {
   zaloId             String      @id @map("zalo_id") @db.VarChar(255)
   licenseType        LicenseType @map("license_type")
   licenseExpired     DateTime?   @map("license_expired")
-  email              String?     @unique @db.VarChar(255)
+  email              String?     @db.VarChar(255)
   password           String?     @db.VarChar(255)
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
@@ -24,6 +24,7 @@ model User {
   accountPlusExpired DateTime?   @map("account_plus_expired")
   canTakeover        Boolean     @default(false) @map("can_takeover")
   banned             Boolean     @default(false)
+  canDoBreakBossDefense Boolean  @default(false) @map("can_do_break_boss_defense")
   username           String?     @db.VarChar(255)
 
   // Relations
@@ -31,6 +32,7 @@ model User {
   proxies        Proxy[]
   deletedProxies DeletedProxy[]
   favoriteMines  UserFavoriteMine[]
+  userGroups     UserGroup[]
 
   @@index([zaloId])
   @@map("users")
@@ -71,10 +73,18 @@ model Account {
   clanId                String?   @map("clanId") @db.VarChar(255)
   clanName              String?   @map("clanName") @db.VarChar(255)
   mineType              MineType? @default(full) @map("mineType")
+  reserveLastAttack     Boolean?  @default(true) @map("reserveLastAttack")
+  autoQuiz              Boolean?  @default(false) @map("autoQuiz")
+  autoBiCanh            Boolean?  @default(true) @map("autoBiCanh")
+  minChestThreshold     Int?      @default(300) @map("minChestThreshold")
+  minFairyGemThreshold  Int?      @default(500) @map("minFairyGemThreshold")
+  anthanTimeRange       Json?     @map("anthanTimeRange")
 
   // Relations
-  creator         User              @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
-  weddingReceived WeddingReceived[]
+  creator           User                   @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  weddingReceived   WeddingReceived[]
+  dailyActivities   AccountDailyActivity[]
+  accountGroups     AccountGroup[]
 
   @@index([toggle])
   @@index([securityUpdatedAt])
@@ -184,7 +194,9 @@ model DeletedProxy {
   password  String?  @db.VarChar(255)
   enabled   Boolean  @default(true)
   creatorId String   @map("creator_id") @db.VarChar(255)
+  reason    String?  @db.VarChar(255)
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   creator User @relation(fields: [creatorId], references: [zaloId], onDelete: NoAction, onUpdate: Cascade)
@@ -196,7 +208,7 @@ model DeletedProxy {
 // Wedding gift tracking
 model WeddingReceived {
   id               Int             @id @default(autoincrement())
-  accountId        Int             @map("accountId")
+  accountId        Int?            @map("accountId")
   roomId           String          @map("roomId") @db.VarChar(255)
   message          String          @db.VarChar(255)
   createdAt        DateTime        @default(now()) @map("createdAt")
@@ -207,12 +219,74 @@ model WeddingReceived {
   type             WeddingGiftType
 
   // Relations
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   @@index([accountId])
   @@index([roomId])
   @@index([createdAt])
   @@map("wedding_received")
+}
+
+// User Groups for account management
+model UserGroup {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  label     String   @unique @db.VarChar(50)
+  creatorId String   @map("creatorId") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relations
+  creator       User           @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  accountGroups AccountGroup[]
+
+  @@index([creatorId])
+  @@index([label])
+  @@map("user_groups")
+}
+
+// Account Group associations (many-to-many between accounts and user groups)
+model AccountGroup {
+  accountId Int      @map("accountId")
+  groupId   Int      @map("groupId")
+  createdAt DateTime @default(now()) @map("createdAt")
+  updatedAt DateTime @updatedAt @map("updatedAt")
+
+  // Relations
+  account Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  group   UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([accountId, groupId])
+  @@unique([accountId, groupId])
+  @@index([groupId])
+  @@map("account_groups")
+}
+
+// Account Daily Activities tracking
+model AccountDailyActivity {
+  id                Int      @id @default(autoincrement())
+  accountId         Int      @map("accountId")
+  progress          Int?
+  totalCultivation  Int?     @map("totalCultivation")
+  totalGem          Int?     @map("totalGem")
+  detail            Json?
+  createdAt         DateTime @default(now()) @map("createdAt")
+  updatedAt         DateTime @updatedAt @map("updatedAt")
+
+  // Relations
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([accountId])
+  @@map("account_daily_activities")
+}
+
+// HH3D Members tracking
+model Hh3dMember {
+  id   Int     @id
+  name String  @db.VarChar(255)
+  tuVi Int?    @map("tu_vi")
+
+  @@map("hh3d_members")
 }
 
 // Enums
@@ -239,5 +313,4 @@ enum WeddingGiftType {
   TuVi      @map("Tu Vi")
   TinhThach @map("Tinh Thạch")
   Xu        @map("Xu")
-  XuKhoa    @map("Xu Khóa")
 }

@@ -143,6 +143,12 @@ export default function DashboardLayout({
       description: "Quản lý tài khoản",
     },
     {
+      name: "Nhóm Tài Khoản",
+      href: "/dashboard/user-groups",
+      icon: Users,
+      description: "Quản lý nhóm tài khoản",
+    },
+    {
       name: "Thiên Đạo Ban Thuởng",
       href: "/dashboard/thien-dao-ban-thuong",
       icon: Gift,

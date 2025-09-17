@@ -3,15 +3,16 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth.config";
 import { prisma } from "../../../../lib/prisma";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const proxyId = parseInt(params.id);
+    const { id } = await params;
+    const proxyId = parseInt(id);
     if (isNaN(proxyId)) {
       return NextResponse.json({ error: "Invalid proxy ID" }, { status: 400 });
     }
@@ -35,15 +36,16 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const proxyId = parseInt(params.id);
+    const { id } = await params;
+    const proxyId = parseInt(id);
     if (isNaN(proxyId)) {
       return NextResponse.json({ error: "Invalid proxy ID" }, { status: 400 });
     }
@@ -101,15 +103,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const proxyId = parseInt(params.id);
+    const { id } = await params;
+    const proxyId = parseInt(id);
     if (isNaN(proxyId)) {
       return NextResponse.json({ error: "Invalid proxy ID" }, { status: 400 });
     }

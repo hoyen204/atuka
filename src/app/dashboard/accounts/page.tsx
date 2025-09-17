@@ -44,10 +44,14 @@ import {
   Filter,
   Heart,
   Mountain,
+  Plus,
   Power,
   PowerOff,
   Search,
   Trash2,
+  UserPlus,
+  UserMinus,
+  Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -71,6 +75,13 @@ interface Account {
   creatorId: string;
   createdAt: string;
   updatedAt: string;
+  accountGroups?: Array<{
+    group: {
+      id: number;
+      name: string;
+      label: string;
+    };
+  }>;
 }
 
 interface Mine {
@@ -98,6 +109,25 @@ interface MinesResponse {
   mines: Mine[];
 }
 
+interface UserGroup {
+  id: number;
+  name: string;
+  label: string;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    accountGroups: number;
+  };
+}
+
+interface UserGroupsResponse {
+  userGroups: UserGroup[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 interface ClansResponse {
   clans: Clan[];
 }
@@ -106,6 +136,7 @@ export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [mines, setMines] = useState<Mine[]>([]);
   const [clans, setClans] = useState<Clan[]>([]);
+  const [userGroups, setUserGroups] = useState<UserGroup[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -113,10 +144,19 @@ export default function AccountsPage() {
   const [isCompactView, setIsCompactView] = useState(false);
   const [search, setSearch] = useState("");
   const [clanFilter, setClanFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isBatchMineDialogOpen, setIsBatchMineDialogOpen] = useState(false);
+  const [isGroupDialogOpen, setIsGroupDialogOpen] = useState(false);
+  const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<UserGroup | null>(null);
+  const [isEditGroupDialogOpen, setIsEditGroupDialogOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupLabel, setNewGroupLabel] = useState("");
+  const [editingGroupLabel, setEditingGroupLabel] = useState("");
   const [selectedAccounts, setSelectedAccounts] = useState<number[]>([]);
+  const [batchAction, setBatchAction] = useState<string>("");
   const { toast } = useToast();
   const api = useApiClient();
   const { isMobile, isTablet, isDesktop } = useResponsive();
@@ -216,6 +256,18 @@ export default function AccountsPage() {
     }
   };
 
+  const fetchUserGroups = async () => {
+    try {
+      const data: UserGroupsResponse = await api.get("/api/user-groups?pageSize=100", {
+        loadingText: "Đang tải danh sách nhóm...",
+        showLoading: false,
+      });
+      setUserGroups(data.userGroups);
+    } catch (error) {
+      console.error("Error fetching user groups:", error);
+    }
+  };
+
   const fetchAccounts = async () => {
     try {
       const params = new URLSearchParams({
@@ -230,6 +282,10 @@ export default function AccountsPage() {
 
       if (clanFilter && clanFilter !== "all") {
         params.append("clanId", clanFilter);
+      }
+
+      if (groupFilter && groupFilter !== "all") {
+        params.append("groupId", groupFilter);
       }
 
       const data: AccountsResponse = await api.get(`/api/accounts?${params}`, {
@@ -255,11 +311,12 @@ export default function AccountsPage() {
   useEffect(() => {
     fetchMines();
     fetchClans();
+    fetchUserGroups();
   }, []);
 
   useEffect(() => {
     fetchAccounts();
-  }, [page, pageSize, search, clanFilter]);
+  }, [page, pageSize, search, clanFilter, groupFilter]);
 
   const copyToClipboard = async (text: string, type: string) => {
     try {
@@ -283,13 +340,12 @@ export default function AccountsPage() {
     if (!mineId || mineId === "none") return "Chưa thiết lập";
     const mine = mines.find((m) => m.id.toString() === mineId);
     return mine
-      ? `${mine.isFavorited ? "❤️ " : ""}${mine.name} (${
-          mine.type === "gold"
-            ? "Thượng"
-            : mine.type === "silver"
-            ? "Trung"
-            : "Hạ"
-        })`
+      ? `${mine.isFavorited ? "❤️ " : ""}${mine.name} (${mine.type === "gold"
+        ? "Thượng"
+        : mine.type === "silver"
+          ? "Trung"
+          : "Hạ"
+      })`
       : `${mineId}`;
   };
 
@@ -298,6 +354,179 @@ export default function AccountsPage() {
       setSelectedAccounts(accounts.map((account) => account.id));
     } else {
       setSelectedAccounts([]);
+    }
+  };
+
+  const handleAddAccountsToGroup = async (groupId: number) => {
+    if (selectedAccounts.length === 0) {
+      toast({
+        title: "Cảnh báo",
+        description: "Vui lòng chọn ít nhất một tài khoản",
+        variant: "destructive",
+        type: "warning",
+      });
+      return;
+    }
+
+    try {
+      const data = await api.post(`/api/user-groups/${groupId}/accounts`, {
+        accountIds: selectedAccounts
+      });
+
+      toast({
+        title: "Thành công",
+        description: data.message,
+        type: "success",
+      });
+      fetchUserGroups();
+      setIsGroupDialogOpen(false);
+      setSelectedAccounts([]);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể thêm tài khoản vào nhóm",
+        variant: "destructive",
+        type: "error",
+      });
+    }
+  };
+
+  const handleRemoveAccountsFromGroup = async (groupId: number) => {
+    if (selectedAccounts.length === 0) {
+      toast({
+        title: "Cảnh báo",
+        description: "Vui lòng chọn ít nhất một tài khoản",
+        variant: "destructive",
+        type: "warning",
+      });
+      return;
+    }
+
+    try {
+      const data = await api.delete(`/api/user-groups/${groupId}/accounts`, {
+        accountIds: selectedAccounts
+      });
+
+      toast({
+        title: "Thành công",
+        description: data.message,
+        type: "success",
+      });
+      fetchUserGroups();
+      setIsGroupDialogOpen(false);
+      setSelectedAccounts([]);
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa tài khoản khỏi nhóm",
+        variant: "destructive",
+        type: "error",
+      });
+    }
+  };
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) {
+      toast({
+        title: "Cảnh báo",
+        description: "Tên nhóm không được để trống",
+        variant: "destructive",
+        type: "warning",
+      });
+      return;
+    }
+
+    try {
+      const data = await api.post('/api/user-groups', {
+        name: newGroupName.trim(),
+        label: newGroupLabel.trim()
+      });
+
+      toast({
+        title: "Thành công",
+        description: `Đã tạo nhóm "${data.userGroup.name}"`,
+        type: "success",
+      });
+      fetchUserGroups();
+      setIsCreateGroupDialogOpen(false);
+      setNewGroupName("");
+      setNewGroupLabel("");
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể tạo nhóm",
+        variant: "destructive",
+        type: "error",
+      });
+    }
+  };
+
+  const handleEditGroup = async () => {
+    if (!editingGroup || !newGroupName.trim()) {
+      toast({
+        title: "Cảnh báo",
+        description: "Tên nhóm không được để trống",
+        variant: "destructive",
+        type: "warning",
+      });
+      return;
+    }
+
+    try {
+      const data = await api.put(`/api/user-groups/${editingGroup.id}`, {
+        name: newGroupName.trim(),
+        label: editingGroupLabel.trim()
+      });
+
+      toast({
+        title: "Thành công",
+        description: `Đã cập nhật tên nhóm thành "${data.userGroup.name}"`,
+        type: "success",
+      });
+      fetchUserGroups();
+      setIsEditGroupDialogOpen(false);
+      setEditingGroup(null);
+      setNewGroupName("");
+      setEditingGroupLabel("");
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể cập nhật tên nhóm",
+        variant: "destructive",
+        type: "error",
+      });
+    }
+  };
+
+  const openEditGroupDialog = (group: UserGroup) => {
+    setEditingGroup(group);
+    setNewGroupName(group.name);
+    setEditingGroupLabel(group.label);
+    setIsEditGroupDialogOpen(true);
+  };
+
+  const handleDeleteGroup = async (groupId: number, groupName: string) => {
+    if (!confirm(`Bạn có chắc muốn xóa nhóm "${groupName}"?`)) return;
+
+    try {
+      await api.delete(`/api/user-groups/${groupId}`);
+      toast({
+        title: "Thành công",
+        description: `Đã xóa nhóm "${groupName}"`,
+        type: "success",
+      });
+      fetchUserGroups();
+      // Reset filter if current group was deleted
+      if (groupFilter === groupId.toString()) {
+        setGroupFilter("all");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lỗi",
+        description: error.message || "Không thể xóa nhóm",
+        variant: "destructive",
+        type: "error",
+      });
     }
   };
 
@@ -322,18 +551,27 @@ export default function AccountsPage() {
     switch (action) {
       case "enable":
         await handleBatchToggle(true);
+        setBatchAction("");
         break;
       case "disable":
         await handleBatchToggle(false);
+        setBatchAction("");
         break;
       case "mine":
         setIsBatchMineDialogOpen(true);
+        // Không reset batchAction cho dialog actions để tránh conflict
+        break;
+      case "groups":
+        setIsGroupDialogOpen(true);
+        // Không reset batchAction cho dialog actions để tránh conflict
         break;
       case "export":
         handleExportSelected();
+        setBatchAction("");
         break;
       case "delete":
         handleBatchDelete();
+        setBatchAction("");
         break;
     }
   };
@@ -353,13 +591,13 @@ export default function AccountsPage() {
 
       toast({
         title: "Thành công",
-        description: `Đã ${enable ? "kích hoạt" : "tạm dừng"} ${
-          result.updatedCount
-        } tài khoản`,
+        description: `Đã ${enable ? "kích hoạt" : "tạm dừng"} ${result.updatedCount
+          } tài khoản`,
         type: "success",
       });
 
       setSelectedAccounts([]);
+      setBatchAction("");
       fetchAccounts();
     } catch (error: any) {
       toast({
@@ -424,6 +662,8 @@ export default function AccountsPage() {
       description: `Đã xuất ${selectedAccounts.length} tài khoản`,
       type: "success",
     });
+
+    setBatchAction("");
   };
 
   const handleBatchMineUpdate = async () => {
@@ -472,6 +712,7 @@ export default function AccountsPage() {
 
       setIsBatchMineDialogOpen(false);
       setSelectedAccounts([]);
+      setBatchAction("");
       fetchAccounts();
     } catch (error: any) {
       toast({
@@ -590,8 +831,8 @@ export default function AccountsPage() {
       account.mineType === "full"
         ? "Nhận khi đạt tối đa"
         : account.mineType === "max"
-        ? "Nhận lâu nhất có thể"
-        : "Nhận sớm nhất có thể (mỗi phút)";
+          ? "Nhận lâu nhất có thể"
+          : "Nhận sớm nhất có thể (mỗi phút)";
 
     return {
       mineName,
@@ -641,9 +882,9 @@ export default function AccountsPage() {
                   <div className={`flex gap-2 ${isMobile ? "flex-col" : ""}`}>
                     <div className={isMobile ? "w-full" : "w-64"}>
                       <Select
+                        key={`clan-filter-${clans.length}`}
                         value={clanFilter}
                         onValueChange={setClanFilter}
-                        defaultValue="all"
                       >
                         <SelectTrigger className="w-full">
                           <div className="flex items-center gap-2">
@@ -660,6 +901,107 @@ export default function AccountsPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className={isMobile ? "w-full" : "flex w-64"}>
+                      <div className="flex gap-2">
+                        <Select
+                          key={`group-filter-${userGroups.length}`}
+                          value={groupFilter}
+                          onValueChange={setGroupFilter}
+                        >
+                          <SelectTrigger className={isMobile ? "flex-1" : "w-48"}>
+                            <div className="flex items-center gap-2">
+                              <SelectValue placeholder="Lọc theo nhóm" />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                <span>Tất cả nhóm</span>
+                              </div>
+                            </SelectItem>
+                            {userGroups.length === 0 ? (
+                              <div className="px-2 py-4 text-center text-sm text-gray-500 border-t mt-1">
+                                <div className="mb-2">Chưa có nhóm nào</div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setIsCreateGroupDialogOpen(true)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tạo nhóm đầu tiên
+                                </Button>
+                              </div>
+                            ) : (
+                              userGroups.map((group) => (
+                                <div key={group.id} className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                                  <SelectItem
+                                    value={group.id.toString()}
+                                    className="flex-1 border-none bg-transparent p-0 cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-blue-500" />
+                                      <span>{group.name}</span>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {group._count.accountGroups}
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                  <div className="flex gap-1 ml-2">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 hover:bg-gray-200"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditGroupDialog(group);
+                                          }}
+                                        >
+                                          <Edit className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Sửa tên nhóm</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteGroup(group.id, group.name);
+                                          }}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Xóa nhóm</TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setIsCreateGroupDialogOpen(true)}
+                              className="h-10 w-10 flex-shrink-0"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Tạo nhóm mới</TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
                     {!isMobile && (
                       <Tooltip>
@@ -689,19 +1031,20 @@ export default function AccountsPage() {
                   className={`top-36 bg-blue-50 z-10 p-3 rounded-md border border-blue-200 mb-4`}
                 >
                   <div
-                    className={`flex items-center gap-4 ${
-                      isMobile ? "flex-col items-start" : ""
-                    }`}
+                    className={`flex items-center gap-4 ${isMobile ? "flex-col items-start" : ""
+                      }`}
                   >
                     <span className="text-sm font-medium text-blue-700">
                       Đã chọn {selectedAccounts.length} tài khoản
                     </span>
                     <div
-                      className={`flex gap-2 ${
-                        isMobile ? "w-full flex-col" : ""
-                      }`}
+                      className={`flex gap-2 ${isMobile ? "w-full flex-col" : ""
+                        }`}
                     >
-                      <Select onValueChange={handleBatchAction} disabled={selectedAccounts.length === 0}>
+                      <Select value={batchAction} onValueChange={(value) => {
+                        setBatchAction(value);
+                        handleBatchAction(value);
+                      }} disabled={selectedAccounts.length === 0}>
                         <SelectTrigger className={isMobile ? "w-full" : "w-48"}>
                           <div className="flex items-center gap-2">
                             <ChevronDown className="h-4 w-4" />
@@ -725,6 +1068,12 @@ export default function AccountsPage() {
                             <div className="flex items-center gap-2">
                               <Mountain className="h-4 w-4 text-amber-600" />
                               <span>Cập nhật khoáng mạch</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="groups">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-blue-600" />
+                              <span>Quản lý nhóm</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="delete">
@@ -782,6 +1131,9 @@ export default function AccountsPage() {
                         <TableHead>Tên tài khoản</TableHead>
                         <TableHead>Tông môn</TableHead>
                         <TableHead className={isMobile ? "hidden" : ""}>
+                          Nhóm
+                        </TableHead>
+                        <TableHead className={isMobile ? "hidden" : ""}>
                           Thông tin khoáng mạch
                         </TableHead>
                         <TableHead className={isMobile ? "hidden" : ""}>
@@ -797,7 +1149,7 @@ export default function AccountsPage() {
                       {accounts.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={isMobile ? 5 : 8}
+                            colSpan={isMobile ? 5 : 9}
                             className="text-center py-8"
                           >
                             Không có tài khoản nào
@@ -840,9 +1192,8 @@ export default function AccountsPage() {
                                 </Tooltip>
                               </TableCell>
                               <TableCell
-                                className={`font-medium ${
-                                  isCompactView ? "py-2" : ""
-                                }`}
+                                className={`font-medium ${isCompactView ? "py-2" : ""
+                                  }`}
                               >
                                 {account.id}
                               </TableCell>
@@ -870,9 +1221,34 @@ export default function AccountsPage() {
                                 )}
                               </TableCell>
                               <TableCell
-                                className={`max-w-48 ${
-                                  isCompactView ? "py-2" : ""
-                                } ${isMobile ? "hidden" : ""}`}
+                                className={`max-w-32 ${isCompactView ? "py-2" : ""} ${isMobile ? "hidden" : ""}`}
+                              >
+                                {account.accountGroups && account.accountGroups.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {account.accountGroups.slice(0, 2).map((accountGroup) => (
+                                      <Badge
+                                        key={accountGroup.group.id}
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        {accountGroup.group.name}
+                                      </Badge>
+                                    ))}
+                                    {account.accountGroups.length > 2 && (
+                                      <Badge variant="outline" className="text-xs">
+                                        +{account.accountGroups.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">
+                                    Chưa có nhóm
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell
+                                className={`max-w-48 ${isCompactView ? "py-2" : ""
+                                  } ${isMobile ? "hidden" : ""}`}
                               >
                                 <div
                                   className={
@@ -880,27 +1256,23 @@ export default function AccountsPage() {
                                   }
                                 >
                                   <div
-                                    className={`font-medium ${
-                                      account.mineId
+                                    className={`font-medium ${account.mineId
                                         ? "text-gray-900"
                                         : "text-gray-400"
-                                    } ${
-                                      isCompactView ? "text-xs" : ""
-                                    } dark:text-foreground/70`}
+                                      } ${isCompactView ? "text-xs" : ""
+                                      } dark:text-foreground/70`}
                                   >
                                     {mineInfo.mineName}
                                   </div>
                                   <div
-                                    className={`text-xs text-gray-600 ${
-                                      isCompactView ? "hidden" : ""
-                                    }`}
+                                    className={`text-xs text-gray-600 ${isCompactView ? "hidden" : ""
+                                      }`}
                                   >
                                     {mineInfo.timeRange}
                                   </div>
                                   <div
-                                    className={`flex items-center gap-2 ${
-                                      isCompactView ? "hidden" : ""
-                                    }`}
+                                    className={`flex items-center gap-2 ${isCompactView ? "hidden" : ""
+                                      }`}
                                   >
                                     <Badge
                                       variant="outline"
@@ -910,18 +1282,16 @@ export default function AccountsPage() {
                                     </Badge>
                                   </div>
                                   <div
-                                    className={`text-xs text-blue-600 ${
-                                      isCompactView ? "text-[10px]" : ""
-                                    }`}
+                                    className={`text-xs text-blue-600 ${isCompactView ? "text-[10px]" : ""
+                                      }`}
                                   >
                                     {mineInfo.mineTypeText}
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell
-                                className={`max-w-40 ${
-                                  isCompactView ? "py-2" : ""
-                                } ${isMobile ? "hidden" : ""}`}
+                                className={`max-w-40 ${isCompactView ? "py-2" : ""
+                                  } ${isMobile ? "hidden" : ""}`}
                               >
                                 <div
                                   className={
@@ -969,9 +1339,8 @@ export default function AccountsPage() {
                                 </div>
                               </TableCell>
                               <TableCell
-                                className={`${isCompactView ? "py-2" : ""} ${
-                                  isMobile ? "hidden" : ""
-                                }`}
+                                className={`${isCompactView ? "py-2" : ""} ${isMobile ? "hidden" : ""
+                                  }`}
                               >
                                 <Badge
                                   variant={
@@ -985,9 +1354,8 @@ export default function AccountsPage() {
                                 className={isCompactView ? "py-2" : ""}
                               >
                                 <div
-                                  className={`flex gap-2 ${
-                                    isCompactView ? "gap-1" : ""
-                                  }`}
+                                  className={`flex gap-2 ${isCompactView ? "gap-1" : ""
+                                    }`}
                                 >
                                   <Tooltip>
                                     <TooltipTrigger asChild>
@@ -1065,9 +1433,9 @@ export default function AccountsPage() {
                   <div className="flex gap-2">
                     <div className="w-64">
                       <Select
+                        key={`clan-filter-${clans.length}`}
                         value={clanFilter}
                         onValueChange={setClanFilter}
-                        defaultValue="all"
                       >
                         <SelectTrigger className="w-full">
                           <div className="flex items-center gap-2">
@@ -1085,24 +1453,125 @@ export default function AccountsPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={isCompactView ? "default" : "outline"}
-                          onClick={() => setIsCompactView(!isCompactView)}
-                          className="h-10 px-4"
+                    <div className="flex w-64">
+                      <div className="flex gap-2">
+                        <Select
+                          key={`group-filter-${userGroups.length}`}
+                          value={groupFilter}
+                          onValueChange={setGroupFilter}
                         >
-                          {isCompactView ? "Mở rộng" : "Thu gọn"}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Chuyển đổi chế độ hiển thị{" "}
-                          {isCompactView ? "mở rộng" : "thu gọn"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
+                          <SelectTrigger className="w-48">
+                            <div className="flex items-center gap-2">
+                              <SelectValue placeholder="Lọc theo nhóm" />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              <div className="flex items-center gap-2">
+                                <Users className="h-4 w-4" />
+                                <span>Tất cả nhóm</span>
+                              </div>
+                            </SelectItem>
+                            {userGroups.length === 0 ? (
+                              <div className="px-2 py-4 text-center text-sm text-gray-500 border-t mt-1">
+                                <div className="mb-2">Chưa có nhóm nào</div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setIsCreateGroupDialogOpen(true)}
+                                  className="text-xs"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  Tạo nhóm đầu tiên
+                                </Button>
+                              </div>
+                            ) : (
+                              userGroups.map((group) => (
+                                <div key={group.id} className="flex items-center justify-between w-full px-2 py-1.5 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                                  <SelectItem
+                                    value={group.id.toString()}
+                                    className="flex-1 border-none bg-transparent p-0 cursor-pointer"
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Users className="h-4 w-4 text-blue-500" />
+                                      <span>{group.name}</span>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {group._count.accountGroups}
+                                      </Badge>
+                                    </div>
+                                  </SelectItem>
+                                  <div className="flex gap-1 ml-2">
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 hover:bg-gray-200"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditGroupDialog(group);
+                                          }}
+                                        >
+                                          <Edit className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Sửa tên nhóm</TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteGroup(group.id, group.name);
+                                          }}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>Xóa nhóm</TooltipContent>
+                                    </Tooltip>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => setIsCreateGroupDialogOpen(true)}
+                              className="h-10 w-10 flex-shrink-0"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Tạo nhóm mới</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
                   </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={isCompactView ? "default" : "outline"}
+                        onClick={() => setIsCompactView(!isCompactView)}
+                        className="h-10 px-4"
+                      >
+                        {isCompactView ? "Mở rộng" : "Thu gọn"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Chuyển đổi chế độ hiển thị{" "}
+                        {isCompactView ? "mở rộng" : "thu gọn"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -1113,7 +1582,10 @@ export default function AccountsPage() {
                       Đã chọn {selectedAccounts.length} tài khoản
                     </span>
                     <div className="flex gap-2">
-                      <Select onValueChange={handleBatchAction} disabled={selectedAccounts.length === 0}>
+                      <Select value={batchAction} onValueChange={(value) => {
+                        setBatchAction(value);
+                        handleBatchAction(value);
+                      }} disabled={selectedAccounts.length === 0}>
                         <SelectTrigger className="w-48">
                           <div className="flex items-center gap-2">
                             <ChevronDown className="h-4 w-4" />
@@ -1137,6 +1609,12 @@ export default function AccountsPage() {
                             <div className="flex items-center gap-2">
                               <Mountain className="h-4 w-4 text-amber-600" />
                               <span>Cập nhật khoáng mạch</span>
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="groups">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-blue-600" />
+                              <span>Quản lý nhóm</span>
                             </div>
                           </SelectItem>
                           <SelectItem value="delete">
@@ -1239,9 +1717,8 @@ export default function AccountsPage() {
                               </Tooltip>
                             </TableCell>
                             <TableCell
-                              className={`font-medium ${
-                                isCompactView ? "py-2" : ""
-                              }`}
+                              className={`font-medium ${isCompactView ? "py-2" : ""
+                                }`}
                             >
                               {account.id}
                             </TableCell>
@@ -1265,9 +1742,8 @@ export default function AccountsPage() {
                               )}
                             </TableCell>
                             <TableCell
-                              className={`max-w-48 ${
-                                isCompactView ? "py-2" : ""
-                              }`}
+                              className={`max-w-48 ${isCompactView ? "py-2" : ""
+                                }`}
                             >
                               <div
                                 className={
@@ -1275,45 +1751,39 @@ export default function AccountsPage() {
                                 }
                               >
                                 <div
-                                  className={`font-medium ${
-                                    account.mineId
+                                  className={`font-medium ${account.mineId
                                       ? "text-gray-900"
                                       : "text-gray-400"
-                                  } ${
-                                    isCompactView ? "text-xs" : ""
-                                  } dark:text-foreground/70`}
+                                    } ${isCompactView ? "text-xs" : ""
+                                    } dark:text-foreground/70`}
                                 >
                                   {mineInfo.mineName}
                                 </div>
                                 <div
-                                  className={`text-xs text-gray-600 ${
-                                    isCompactView ? "hidden" : ""
-                                  }`}
+                                  className={`text-xs text-gray-600 ${isCompactView ? "hidden" : ""
+                                    }`}
                                 >
                                   {mineInfo.timeRange}
                                 </div>
                                 <div
-                                  className={`flex items-center gap-2 ${
-                                    isCompactView ? "hidden" : ""
-                                  }`}
+                                  className={`flex items-center gap-2 ${isCompactView ? "hidden" : ""
+                                    }`}
                                 >
                                   <Badge variant="outline" className="text-xs">
                                     Buff: {mineInfo.buffAmount}
                                   </Badge>
                                 </div>
                                 <div
-                                  className={`text-xs text-blue-600 ${
-                                    isCompactView ? "text-[10px]" : ""
-                                  }`}
+                                  className={`text-xs text-blue-600 ${isCompactView ? "text-[10px]" : ""
+                                    }`}
                                 >
                                   {mineInfo.mineTypeText}
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell
-                              className={`max-w-40 ${
-                                isCompactView ? "py-2" : ""
-                              }`}
+                              className={`max-w-40 ${isCompactView ? "py-2" : ""
+                                }`}
                             >
                               <div
                                 className={
@@ -1369,9 +1839,8 @@ export default function AccountsPage() {
                             </TableCell>
                             <TableCell className={isCompactView ? "py-2" : ""}>
                               <div
-                                className={`flex gap-2 ${
-                                  isCompactView ? "gap-1" : ""
-                                }`}
+                                className={`flex gap-2 ${isCompactView ? "gap-1" : ""
+                                  }`}
                               >
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1454,7 +1923,6 @@ export default function AccountsPage() {
                     <SelectItem value="none">Không chọn</SelectItem>
                     {mines
                       .sort((a, b) => {
-                        // Sort by favorite status first, then by peaceful status
                         if (a.isFavorited && !b.isFavorited) return -1;
                         if (!a.isFavorited && b.isFavorited) return 1;
                         if (a.isPeaceful && !b.isPeaceful) return 1;
@@ -1477,8 +1945,8 @@ export default function AccountsPage() {
                                   {mine.type === "gold"
                                     ? "Thượng"
                                     : mine.type === "silver"
-                                    ? "Trung"
-                                    : "Hạ"}
+                                      ? "Trung"
+                                      : "Hạ"}
                                   )
                                 </span>
                               </div>
@@ -1494,11 +1962,10 @@ export default function AccountsPage() {
                             }}
                           >
                             <Heart
-                              className={`h-4 w-4 ${
-                                mine.isFavorited
+                              className={`h-4 w-4 ${mine.isFavorited
                                   ? "text-red-500 fill-current"
                                   : "text-gray-400 hover:text-red-500"
-                              }`}
+                                }`}
                             />
                           </Button>
                         </div>
@@ -1512,11 +1979,10 @@ export default function AccountsPage() {
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                   <div className="flex items-center gap-2">
                     <Heart
-                      className={`h-5 w-5 ${
-                        mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
+                      className={`h-5 w-5 ${mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
                           ? "text-red-500 fill-current"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     />
                     <span className="text-sm font-medium">
                       {mines.find(m => m.id.toString() === editForm.mineId)?.name}
@@ -1534,11 +2000,10 @@ export default function AccountsPage() {
                     className="flex items-center gap-2"
                   >
                     <Heart
-                      className={`h-4 w-4 ${
-                        mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
+                      className={`h-4 w-4 ${mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
                           ? "text-red-500 fill-current"
                           : "text-gray-400"
-                      }`}
+                        }`}
                     />
                     {mines.find(m => m.id.toString() === editForm.mineId)?.isFavorited
                       ? "Bỏ yêu thích"
@@ -1643,9 +2108,219 @@ export default function AccountsPage() {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={isGroupDialogOpen} onOpenChange={(open) => {
+          setIsGroupDialogOpen(open);
+          if (!open) setBatchAction("");
+        }}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Quản lý nhóm tài khoản</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="text-sm text-gray-600">
+                Quản lý nhóm cho {selectedAccounts.length} tài khoản đã chọn
+              </div>
+
+              {userGroups.length === 0 ? (
+                <></>
+              ) : (
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {userGroups.map((group) => (
+                    <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex-1 min-w-0">
+                        <div
+                          className="font-medium cursor-pointer hover:text-blue-600 transition-colors"
+                          onClick={() => openEditGroupDialog(group)}
+                          title="Click để sửa tên nhóm"
+                        >
+                          {group.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {group._count.accountGroups} tài khoản
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAddAccountsToGroup(group.id)}
+                              disabled={selectedAccounts.length === 0}
+                            >
+                              <UserPlus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Thêm tài khoản vào nhóm</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRemoveAccountsFromGroup(group.id)}
+                              disabled={selectedAccounts.length === 0}
+                            >
+                              <UserMinus className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Xóa tài khoản khỏi nhóm</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-between items-center pt-4 border-t">
+                <div className="text-xs text-gray-500">
+                  Click vào tên nhóm để sửa trực tiếp
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setIsGroupDialogOpen(false)}>
+                    Đóng
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedAccounts([]);
+                      setIsGroupDialogOpen(false);
+                    }}
+                    disabled={selectedAccounts.length === 0}
+                  >
+                    Bỏ chọn tất cả
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isCreateGroupDialogOpen} onOpenChange={setIsCreateGroupDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Tạo nhóm mới</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="group-name">Tên nhóm</Label>
+                <Input
+                  id="group-name"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Nhập tên nhóm mới"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateGroup()}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Nhập tên hiển thị cho nhóm tài khoản
+                </p>
+                {newGroupName.trim() && newGroupName.length < 2 && (
+                  <p className="text-sm text-red-500">
+                    Tên nhóm phải có ít nhất 2 ký tự
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="group-label">Label nhóm</Label>
+                <Input
+                  id="group-label"
+                  value={newGroupLabel}
+                  onChange={(e) => setNewGroupLabel(e.target.value)}
+                  placeholder="Nhập label cho nhóm"
+                  onKeyPress={(e) => e.key === 'Enter' && handleCreateGroup()}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Nhập label duy nhất để định danh nhóm (không chứa khoảng trắng)
+                </p>
+                {newGroupLabel.trim() && newGroupLabel.length < 2 && (
+                  <p className="text-sm text-red-500">
+                    Label nhóm phải có ít nhất 2 ký tự
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => {
+                  setIsCreateGroupDialogOpen(false);
+                  setNewGroupName("");
+                  setNewGroupLabel("");
+                }}>
+                  Hủy
+                </Button>
+                <Button onClick={handleCreateGroup} disabled={!newGroupName.trim() || newGroupName.length < 2 || !newGroupLabel.trim() || newGroupLabel.length < 2}>
+                  Tạo nhóm
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditGroupDialogOpen} onOpenChange={setIsEditGroupDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Sửa tên nhóm</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-group-name">Tên nhóm mới</Label>
+                <Input
+                  id="edit-group-name"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Nhập tên nhóm mới"
+                  onKeyPress={(e) => e.key === 'Enter' && handleEditGroup()}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Cập nhật tên hiển thị cho nhóm tài khoản
+                </p>
+                {newGroupName.trim() && newGroupName.length < 2 && (
+                  <p className="text-sm text-red-500">
+                    Tên nhóm phải có ít nhất 2 ký tự
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-group-label">Label nhóm mới</Label>
+                <Input
+                  id="edit-group-label"
+                  value={editingGroupLabel}
+                  onChange={(e) => setEditingGroupLabel(e.target.value)}
+                  placeholder="Nhập label mới cho nhóm"
+                  onKeyPress={(e) => e.key === 'Enter' && handleEditGroup()}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Cập nhật label định danh cho nhóm (không chứa khoảng trắng)
+                </p>
+                {editingGroupLabel.trim() && editingGroupLabel.length < 2 && (
+                  <p className="text-sm text-red-500">
+                    Label nhóm phải có ít nhất 2 ký tự
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => {
+                  setIsEditGroupDialogOpen(false);
+                  setEditingGroup(null);
+                  setNewGroupName("");
+                  setEditingGroupLabel("");
+                }}>
+                  Hủy
+                </Button>
+                <Button onClick={handleEditGroup} disabled={!newGroupName.trim() || newGroupName.length < 2 || !editingGroupLabel.trim() || editingGroupLabel.length < 2}>
+                  Cập nhật
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Dialog
           open={isBatchMineDialogOpen}
-          onOpenChange={setIsBatchMineDialogOpen}
+          onOpenChange={(open) => {
+            setIsBatchMineDialogOpen(open);
+            if (!open) setBatchAction("");
+          }}
         >
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -1693,8 +2368,8 @@ export default function AccountsPage() {
                                   {mine.type === "gold"
                                     ? "Thượng"
                                     : mine.type === "silver"
-                                    ? "Trung"
-                                    : "Hạ"}
+                                      ? "Trung"
+                                      : "Hạ"}
                                   )
                                 </span>
                               </div>
@@ -1710,11 +2385,10 @@ export default function AccountsPage() {
                             }}
                           >
                             <Heart
-                              className={`h-4 w-4 ${
-                                mine.isFavorited
+                              className={`h-4 w-4 ${mine.isFavorited
                                   ? "text-red-500 fill-current"
                                   : "text-gray-400 hover:text-red-500"
-                              }`}
+                                }`}
                             />
                           </Button>
                         </div>

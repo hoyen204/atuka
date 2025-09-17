@@ -3,11 +3,17 @@ import { useGlobalLoading } from "@/hooks/useGlobalLoading";
 interface ApiCallOptions {
   loadingText?: string;
   showLoading?: boolean;
+  timeout?: number; // Timeout in milliseconds
+}
+
+interface ApiError extends Error {
+  status?: number;
+  statusText?: string;
+  data?: any;
 }
 
 export class ApiClient {
   private static instance: ApiClient;
-  private globalLoading = useGlobalLoading.getState();
 
   private constructor() {}
 
@@ -22,31 +28,58 @@ export class ApiClient {
     url: string,
     options: RequestInit & ApiCallOptions = {}
   ): Promise<T> {
-    const { loadingText = "Đang tải dữ liệu...", showLoading = true, ...fetchOptions } = options;
+    const { loadingText = "Đang tải dữ liệu...", showLoading = true, timeout = 30000, ...fetchOptions } = options;
 
     try {
       if (showLoading) {
-        this.globalLoading.showLoading(loadingText);
+        useGlobalLoading.getState().showLoading(loadingText);
       }
 
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...fetchOptions.headers,
-        },
-        ...fetchOptions,
-      });
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...fetchOptions.headers,
+          },
+          signal: controller.signal,
+          ...fetchOptions,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          const timeoutError: ApiError = new Error('Request timeout');
+          timeoutError.name = 'TimeoutError';
+          throw timeoutError;
+        }
+        throw fetchError;
+      }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP Error: ${response.status}`);
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: response.statusText || 'Unknown error' };
+        }
+
+        const apiError: ApiError = new Error(errorData.error || `HTTP Error: ${response.status}`);
+        apiError.status = response.status;
+        apiError.statusText = response.statusText;
+        apiError.data = errorData;
+        throw apiError;
       }
 
       const data = await response.json();
       return data;
     } finally {
       if (showLoading) {
-        this.globalLoading.hideLoading();
+        useGlobalLoading.getState().hideLoading();
       }
     }
   }
@@ -93,24 +126,51 @@ export const useApiClient = () => {
     url: string,
     options: RequestInit & ApiCallOptions = {}
   ): Promise<T> => {
-    const { loadingText = "Đang tải dữ liệu...", showLoading = true, ...fetchOptions } = options;
+    const { loadingText = "Đang tải dữ liệu...", showLoading = true, timeout = 30000, ...fetchOptions } = options;
 
     try {
       if (showLoading) {
         globalLoading.showLoading(loadingText);
       }
 
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...fetchOptions.headers,
-        },
-        ...fetchOptions,
-      });
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...fetchOptions.headers,
+          },
+          signal: controller.signal,
+          ...fetchOptions,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        if (fetchError.name === 'AbortError') {
+          const timeoutError: ApiError = new Error('Request timeout');
+          timeoutError.name = 'TimeoutError';
+          throw timeoutError;
+        }
+        throw fetchError;
+      }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP Error: ${response.status}`);
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: response.statusText || 'Unknown error' };
+        }
+
+        const apiError: ApiError = new Error(errorData.error || `HTTP Error: ${response.status}`);
+        apiError.status = response.status;
+        apiError.statusText = response.statusText;
+        apiError.data = errorData;
+        throw apiError;
       }
 
       const data = await response.json();
@@ -147,7 +207,11 @@ export const useApiClient = () => {
         body: data ? JSON.stringify(data) : undefined,
       }),
     
-    delete: <T = any>(url: string, options: Omit<RequestInit & ApiCallOptions, 'method'> = {}) =>
-      request<T>(url, { ...options, method: 'DELETE' }),
+    delete: <T = any>(url: string, data?: any, options: Omit<RequestInit & ApiCallOptions, 'method' | 'body'> = {}) =>
+      request<T>(url, {
+        ...options,
+        method: 'DELETE',
+        body: data ? JSON.stringify(data) : undefined,
+      }),
   };
 }; 

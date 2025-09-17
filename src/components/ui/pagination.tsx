@@ -280,7 +280,7 @@ export function PaginationComponent({
       <div className="flex items-center justify-between text-sm text-gray-600 animate-pagination-slide-in">
         <div className="flex items-center gap-4">
           <span className="transition-colors duration-200">
-            Hiển thị {startEntry.toLocaleString()} - {endEntry.toLocaleString()} trong tổng số {total.toLocaleString()} mục
+            Hiển thị {startEntry.toLocaleString()} - {endEntry.toLocaleString()} trong tổng số {total?.toLocaleString() || 0} mục
           </span>
           
           {onPageSizeChange && (

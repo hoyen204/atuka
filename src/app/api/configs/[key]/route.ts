@@ -5,11 +5,11 @@ import { prisma } from "../../../../lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -22,8 +22,9 @@ export async function GET(
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
+    const { key } = await params;
     const config = await prisma.config.findUnique({
-      where: { key: params.key }
+      where: { key }
     });
 
     if (!config) {
@@ -40,11 +41,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -64,8 +65,9 @@ export async function PUT(
       return NextResponse.json({ error: "Value is required" }, { status: 400 });
     }
 
+    const { key } = await params;
     const existingConfig = await prisma.config.findUnique({
-      where: { key: params.key }
+      where: { key }
     });
 
     if (!existingConfig) {
@@ -73,7 +75,7 @@ export async function PUT(
     }
 
     const config = await prisma.config.update({
-      where: { key: params.key },
+      where: { key },
       data: { value }
     });
 
@@ -87,11 +89,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user?.zalo_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -104,8 +106,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
+    const { key } = await params;
     const existingConfig = await prisma.config.findUnique({
-      where: { key: params.key }
+      where: { key }
     });
 
     if (!existingConfig) {
@@ -113,7 +116,7 @@ export async function DELETE(
     }
 
     await prisma.config.delete({
-      where: { key: params.key }
+      where: { key }
     });
 
     return NextResponse.json({ message: "Config deleted successfully" });

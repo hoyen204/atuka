@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
     const search = searchParams.get('search') || '';
     const clanId = searchParams.get('clanId') || '';
+    const groupId = searchParams.get('groupId') || '';
     const cursor = searchParams.get('cursor');
 
     const whereClause: any = {
@@ -29,6 +30,14 @@ export async function GET(request: Request) {
     }
 
     if (clanId) whereClause.clanId = clanId;
+
+    if (groupId) {
+      whereClause.accountGroups = {
+        some: {
+          groupId: parseInt(groupId)
+        }
+      };
+    }
 
     const total = await prisma.account.count({ where: whereClause });
 
@@ -54,6 +63,17 @@ export async function GET(request: Request) {
         fairyGem: true,
         coin: true,
         lockCoin: true,
+        accountGroups: {
+          select: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                label: true,
+              }
+            }
+          }
+        },
       },
       orderBy: { id: "asc" },
     });
