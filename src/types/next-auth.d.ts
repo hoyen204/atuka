@@ -5,6 +5,7 @@ declare module 'next-auth' {
     user: {
       id: string;
       zalo_id: string;
+      zaloId: string;
       license_type: string;
       is_admin: boolean;
       account_plus: number;
@@ -29,6 +30,7 @@ declare module 'next-auth' {
 declare module 'next-auth/jwt' {
   interface JWT {
     zalo_id: string;
+    zaloId: string;
     license_type: string;
     is_admin: boolean;
     account_plus: number;

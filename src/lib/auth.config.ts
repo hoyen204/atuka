@@ -106,6 +106,7 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         session.user.id = token.sub as string;
         session.user.zalo_id = token.zalo_id as string;
+        session.user.zaloId = token.zalo_id as string;
         session.user.license_type = token.license_type as string;
         session.user.is_admin = token.is_admin as boolean;
         session.user.account_plus = token.account_plus as number;

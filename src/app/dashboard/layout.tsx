@@ -13,6 +13,8 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import {
   Bell,
+  CreditCard,
+  Crown,
   Gift,
   Home,
   LogOut,
@@ -208,6 +210,18 @@ export default function DashboardLayout({
       icon: ShoppingBag,
       description: "Quản lý cửa hàng người dùng",
     },
+    {
+      name: "Ví tiền",
+      href: "/dashboard/wallet",
+      icon: CreditCard,
+      description: "Quản lý ví tiền",
+    },
+    {
+      name: "Nâng Cấp License",
+      href: "/dashboard/payment",
+      icon: Crown,
+      description: "Nạp tiền & mua gói",
+    },
   ];
 
   // Add User Management only for admin
@@ -217,6 +231,12 @@ export default function DashboardLayout({
       href: "/dashboard/users",
       icon: Users,
       description: "Quản lý người dùng",
+    },
+    {
+      name: "Quản Lý Ví Tiền",
+      href: "/dashboard/admin/wallet-management",
+      icon: CreditCard,
+      description: "Quản lý ví tiền users",
     },
     {
       name: "Cấu Hình Hệ Thống",

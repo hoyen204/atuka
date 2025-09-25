@@ -27,7 +27,8 @@ import {
   Award,
   Target,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -172,6 +173,24 @@ export default function DashboardPage() {
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-900/20",
       borderColor: "border-orange-200 dark:border-orange-800"
+    },
+    {
+      title: "Ví tiền",
+      description: "Xem số dư và lịch sử giao dịch",
+      href: "/dashboard/wallet",
+      icon: CreditCard,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      borderColor: "border-blue-200 dark:border-blue-800"
+    },
+    {
+      title: "Nạp tiền & Mua gói",
+      description: "Nạp tiền vào ví và nâng cấp license",
+      href: "/dashboard/payment",
+      icon: Crown,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+      borderColor: "border-yellow-200 dark:border-yellow-800"
     }
   ];
 

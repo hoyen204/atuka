@@ -33,6 +33,8 @@ model User {
   deletedProxies DeletedProxy[]
   favoriteMines  UserFavoriteMine[]
   userGroups     UserGroup[]
+  payments       Payment[]
+  wallet         UserWallet?
 
   @@index([zaloId])
   @@map("users")
@@ -83,7 +85,6 @@ model Account {
   // Relations
   creator           User                   @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
   weddingReceived   WeddingReceived[]
-  dailyActivities   AccountDailyActivity[]
   accountGroups     AccountGroup[]
 
   @@index([toggle])
@@ -273,9 +274,6 @@ model AccountDailyActivity {
   createdAt         DateTime @default(now()) @map("createdAt")
   updatedAt         DateTime @updatedAt @map("updatedAt")
 
-  // Relations
-  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-
   @@index([accountId])
   @@map("account_daily_activities")
 }
@@ -313,4 +311,79 @@ enum WeddingGiftType {
   TuVi      @map("Tu Vi")
   TinhThach @map("Tinh Thạch")
   Xu        @map("Xu")
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String        @map("user_id") @db.VarChar(255)
+  amount         Int
+  licenseType    LicenseType   @map("license_type")
+  accountPlus    Int           @default(0) @map("account_plus")
+  status         PaymentStatus @default(PENDING)
+  sepayOrderId   String?       @unique @map("sepay_order_id") @db.VarChar(255)
+  sepayTxnId     String?       @map("sepay_txn_id") @db.VarChar(255)
+  expiresAt      DateTime      @map("expires_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  paidAt         DateTime?     @map("paid_at")
+  description    String?       @db.Text
+
+  user User @relation(fields: [userId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([sepayOrderId])
+  @@index([sepayOrderId, status]) // Composite index for webhook lookups
+  @@index([paidAt]) // Index for payment completion queries
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+model UserWallet {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id") @db.VarChar(255)
+  balance     Int      @default(0) // Số dư VNĐ
+  totalDeposit Int     @default(0) @map("total_deposit") // Tổng đã nạp
+  totalSpent  Int      @default(0) @map("total_spent") // Tổng đã tiêu
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User     @relation(fields: [userId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
+  transactions WalletTransaction[]
+
+  @@unique([userId])
+  @@map("user_wallets")
+}
+
+enum TransactionType {
+  DEPOSIT    // Nạp tiền
+  PURCHASE   // Mua package
+  REFUND     // Hoàn tiền
+  BONUS      // Thưởng
+}
+
+model WalletTransaction {
+  id          String          @id @default(cuid())
+  walletId    String          @map("wallet_id")
+  type        TransactionType
+  amount      Int             // Số tiền VNĐ (có thể âm)
+  balanceBefore Int           @map("balance_before") // Số dư trước giao dịch
+  balanceAfter  Int           @map("balance_after")  // Số dư sau giao dịch
+  description String?         @db.Text
+  referenceId String?         @map("reference_id") // ID tham chiếu (payment ID, package ID, etc.)
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  wallet      UserWallet      @relation(fields: [walletId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([walletId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("wallet_transactions")
 }

@@ -14,6 +14,7 @@ const DialogClose = DialogPrimitive.Close
 
 export interface DialogProps {
   animation?: "scale" | "slide" | "zoom" | "flip" | "bounce"
+  layout?: "vertical" | "horizontal"
 }
 
 const DialogOverlay = React.forwardRef<
@@ -38,7 +39,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & DialogProps
->(({ className, children, animation = "scale", ...props }, ref) => {
+>(({ className, children, animation = "scale", layout = "vertical", ...props }, ref) => {
   const getAnimationClasses = () => {
     switch (animation) {
       case "slide":
@@ -51,7 +52,7 @@ const DialogContent = React.forwardRef<
       case "zoom":
         return cn(
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0", 
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-90 data-[state=open]:zoom-in-90",
           "duration-300"
         )
@@ -73,23 +74,39 @@ const DialogContent = React.forwardRef<
     }
   }
 
+  const getLayoutClasses = () => {
+    switch (layout) {
+      case "horizontal":
+        return cn(
+          // Horizontal layout for desktop
+          "md:grid-cols-2 md:max-w-4xl md:gap-8",
+          // Keep vertical on mobile
+          "grid-cols-1 max-w-md gap-6"
+        )
+      default: // vertical
+        return cn(
+          "grid-cols-1 max-w-lg gap-6",
+          "md:max-w-lg lg:max-w-xl"
+        )
+    }
+  }
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-6",
-          "border-2 border-gray-200/50 bg-white/95 backdrop-blur-xl p-8 shadow-2xl",
-          "rounded-md",
+          "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%]",
+          "border-2 border-gray-200/50 bg-white/95 backdrop-blur-xl shadow-2xl rounded-md",
           "dark:border-gray-700/50 dark:bg-gray-900/95",
           // Enhanced shadow and glow effects
           "shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)]",
           "ring-1 ring-black/5 dark:ring-white/10",
           // Animation classes
           getAnimationClasses(),
-          // Responsive design
-          "sm:rounded-md sm:max-w-md md:max-w-lg lg:max-w-xl",
+          // Layout classes
+          getLayoutClasses(),
           className
         )}
         {...props}
