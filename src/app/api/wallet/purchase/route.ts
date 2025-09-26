@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { prisma } from '@/lib/prisma';
-import { getOrCreateWallet, addWalletTransaction, checkWalletBalance } from '@/lib/wallet.utils';
+import { getOrCreateWallet, addWalletTransaction, checkWalletBalance } from '@/lib/wallet.service.utils';
 import { LicenseType } from '@prisma/client';
 
 interface PurchaseRequest {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { LicenseType, Prisma } from '@prisma/client';
-import { getOrCreateWallet, addWalletTransaction } from '@/lib/wallet.utils';
+import { getOrCreateWallet, addWalletTransaction } from '@/lib/wallet.service.utils';
 
 interface SepayWebhookPayload {
   gateway: string;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { prisma } from '@/lib/prisma';
-import { addWalletTransaction } from '@/lib/wallet.utils';
+import { addWalletTransaction } from '@/lib/wallet.service.utils';
 import { TransactionType } from '@prisma/client';
 
 interface AdjustmentRequest {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate adjustment amount
     const adjustmentAmount = type === 'BONUS' ? amount : -amount;
-    const transactionType = type === 'BONUS' ? TransactionType.BONUS : 'PENALTY' as TransactionType;
+    const transactionType = type === 'BONUS' ? TransactionType.BONUS : TransactionType.PENALTY;
 
     // Create transaction record
     await addWalletTransaction(

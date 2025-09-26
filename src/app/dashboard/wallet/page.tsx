@@ -10,6 +10,8 @@ import { Wallet, TrendingUp, TrendingDown, Gift, ArrowLeftRight, CreditCard, Fil
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getTransactionTypeLabel, getTransactionTypeColor, formatCurrency } from '@/lib/wallet.utils';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 
 interface WalletInfo {
   id: string;
@@ -149,12 +151,16 @@ export default function WalletPage() {
           <h1 className="text-3xl font-bold">Ví tiền</h1>
           <p className="text-muted-foreground">Quản lý số dư và lịch sử giao dịch</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/payment">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Nạp tiền / Mua gói
-          </Link>
-        </Button>
+        <Link
+          href="/dashboard/payment"
+          className={cn(
+            buttonVariants({ variant: "default", size: "default" }),
+            "no-underline"
+          )}
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          Nạp tiền / Mua gói
+        </Link>
       </div>
 
       {wallet && (

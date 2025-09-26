@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, Crown, Star, Gift, Calculator, Wallet, CreditCard } from 'lucide-react';
+import { CheckCircle, Crown, Star, Gift, Calculator, Wallet, CreditCard, Download, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/useToast';
 
 interface LicensePackage {
@@ -281,11 +281,36 @@ export default function PaymentPage() {
     }
   };
 
-  const getLicenseColor = (type: string) => {
-    switch (type) {
-      case 'PRO': return 'from-yellow-500 to-orange-500';
-      case 'BASIC': return 'from-blue-500 to-purple-500';
-      default: return 'from-green-500 to-emerald-500';
+  const downloadQR = async () => {
+    if (!depositData?.qrCode) return;
+    
+    try {
+      const response = await fetch(depositData.qrCode);
+      if (!response.ok) throw new Error('Failed to fetch QR image');
+      
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `QR_NapTien_${depositData.depositId || 'unknown'}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Thành công',
+        description: 'QR Code đã được tải xuống.',
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tải QR Code. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -299,485 +324,399 @@ export default function PaymentPage() {
     );
   }
 
+  // Update overall structure for desktop expansion
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto p-4 space-y-4">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 p-4 text-white shadow-lg">
-          <div className="absolute inset-0 bg-black/10"></div>
-          <div className="relative z-10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
-                <Wallet className="h-5 w-5" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-3 md:p-4 lg:p-5 space-y-4 md:space-y-6 lg:space-y-8 max-w-4xl md:max-w-6xl lg:max-w-7xl">
+        
+        {/* Hero - Balanced sizing */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-3 md:p-4 lg:p-5 text-white shadow-lg border border-white/20">
+          <div className="absolute inset-0 bg-black/5"></div>
+          <div className="relative z-10 text-center">
+            <div className="flex items-center justify-center gap-2 md:gap-3 mb-3 md:mb-4">
+              <div className="p-2 md:p-3 lg:p-4 bg-white/20 rounded-full">
+                <Wallet className="h-5 md:h-6 lg:h-7 w-5 md:w-6 lg:w-7" />
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                Ví tiền & Nâng cấp
-              </h1>
+              <h1 className="text-lg md:text-xl lg:text-2xl font-bold">Ví & Nâng cấp</h1>
             </div>
-            <p className="text-center text-blue-100 text-sm max-w-lg mx-auto leading-relaxed">
-              Quản lý ví tiền thông minh và nâng cấp trải nghiệm với các gói dịch vụ cao cấp
-            </p>
+            <p className="text-blue-100 text-sm md:text-base lg:text-lg leading-relaxed max-w-lg mx-auto">Quản lý ví tiền thông minh và nâng cấp trải nghiệm với các gói dịch vụ cao cấp</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Cards - Adjusted gaps and padding */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
           {wallet && (
-            <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-              <div className="absolute inset-0 bg-black/10"></div>
-              <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -translate-y-8 translate-x-8"></div>
-              <CardHeader className="relative z-10 pb-3">
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <div className="p-1.5 bg-white/20 rounded-full backdrop-blur-sm">
-                    <Wallet className="h-4 w-4" />
+            <Card className="border-0 shadow-md bg-white rounded-2xl p-3 md:p-4 lg:p-6">
+              <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                <div className="p-2 md:p-2.5 lg:p-3 bg-emerald-100 rounded-full">
+                  <Wallet className="h-5 md:h-6 lg:h-7 w-5 md:w-6 lg:w-7 text-emerald-600" />
+                </div>
+                <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-800">Số dư ví</h3>
+              </div>
+              <div className="space-y-3 md:space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 text-xs md:text-sm lg:text-base">Hiện tại</span>
+                  <span className="text-xl md:text-2xl lg:text-3xl font-bold text-emerald-600">{formatPrice(wallet.balance)}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 md:gap-3 lg:gap-4 text-xs md:text-sm lg:text-base">
+                  <div className="bg-gray-50 p-2 md:p-3 lg:p-4 rounded-lg text-center">
+                    <div className="text-green-600 font-medium text-sm md:text-base lg:text-lg">{formatPrice(wallet.totalDeposit)}</div>
+                    <div className="text-gray-500 text-xs md:text-sm">Đã nạp</div>
                   </div>
-                  <span className="text-lg">Thông tin ví</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative z-10 space-y-3">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-emerald-100 text-sm">Số dư hiện tại:</span>
-                    <span className="text-2xl font-bold text-white">{formatPrice(wallet.balance)}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-green-500/20 rounded-lg p-2 border border-green-400/30">
-                      <div className="text-xs text-green-100 mb-1">Tổng đã nạp</div>
-                      <div className="font-semibold text-green-200 text-sm">{formatPrice(wallet.totalDeposit)}</div>
-                    </div>
-                    <div className="bg-red-500/20 rounded-lg p-2 border border-red-400/30">
-                      <div className="text-xs text-red-100 mb-1">Tổng đã tiêu</div>
-                      <div className="font-semibold text-red-200 text-sm">{formatPrice(wallet.totalSpent)}</div>
-                    </div>
+                  <div className="bg-gray-50 p-2 md:p-3 lg:p-4 rounded-lg text-center">
+                    <div className="text-red-600 font-medium text-sm md:text-base lg:text-lg">{formatPrice(wallet.totalSpent)}</div>
+                    <div className="text-gray-500 text-xs md:text-sm">Đã tiêu</div>
                   </div>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {currentUser && (
-            <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white">
-              <div className="absolute inset-0 bg-black/10"></div>
-              <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-lg -translate-y-6 translate-x-6"></div>
-              <CardHeader className="relative z-10 pb-3">
-                <CardTitle className="flex items-center gap-2 text-white">
-                  <div className="p-1.5 bg-white/20 rounded-full backdrop-blur-sm">
-                    {getLicenseIcon(currentUser.licenseType)}
-                  </div>
-                  <span className="text-lg">License hiện tại</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="text-center">
-                      <div className="text-xs text-purple-100 mb-1">Gói hiện tại</div>
-                      <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-2 py-0.5 text-xs">
-                        {currentUser.licenseType}
-                      </Badge>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-purple-100 mb-1">Account Plus</div>
-                      <div className="text-xl font-bold text-white">{currentUser.accountPlus}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-purple-100 mb-1">Hết hạn</div>
-                      <div className="text-xs font-semibold text-white">{formatDate(currentUser.licenseExpired)}</div>
-                    </div>
-                  </div>
+            <Card className="border-0 shadow-md bg-white rounded-2xl p-3 md:p-4 lg:p-6">
+              <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                <div className="p-2 md:p-2.5 lg:p-3 bg-purple-100 rounded-full">
+                  {getLicenseIcon(currentUser.licenseType)}
                 </div>
-              </CardContent>
+                <h3 className="text-base md:text-lg lg:text-xl font-semibold text-gray-800">Gói hiện tại</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-2 md:gap-3 lg:gap-6 text-center text-xs md:text-sm lg:text-base">
+                <div>
+                  <div className="font-semibold text-purple-600 text-sm md:text-base lg:text-lg">{currentUser.licenseType}</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Gói</div>
+                </div>
+                <div>
+                  <div className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800">{currentUser.accountPlus}</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Account Plus</div>
+                </div>
+                <div>
+                  <div className="text-gray-600 text-xs md:text-sm lg:text-base">{formatDate(currentUser.licenseExpired)}</div>
+                  <div className="text-gray-500 text-xs md:text-sm">Hết hạn</div>
+                </div>
+              </div>
             </Card>
           )}
         </div>
 
+        {/* Tabs - Scaled appropriately */}
         <Tabs defaultValue="deposit" className="w-full">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-1.5 shadow-lg border border-white/20 mb-4">
-            <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-0.5">
-              <TabsTrigger
-                value="deposit"
-                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg"
-              >
-                <div className="p-1.5 bg-blue-100 rounded-full">
-                  <CreditCard className="h-3 w-3 text-blue-600" />
-                </div>
-                <span>Nạp tiền</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="purchase"
-                className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg"
-              >
-                <div className="p-1.5 bg-purple-100 rounded-full">
-                  <Crown className="h-3 w-3 text-purple-600" />
-                </div>
-                <span>Mua gói</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="grid grid-cols-2 bg-white rounded-xl shadow-sm border border-gray-200">
+            <TabsTrigger value="deposit" className="gap-2 rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+              <CreditCard className="h-4 md:h-5 lg:h-6 w-4 md:w-5 lg:w-6 flex-shrink-0" />
+              <span className="text-sm md:text-base lg:text-lg font-medium">Nạp tiền</span>
+            </TabsTrigger>
+            <TabsTrigger value="purchase" className="gap-2 rounded-lg data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+              <Crown className="h-4 md:h-5 lg:h-6 w-4 md:w-5 lg:w-6 flex-shrink-0" />
+              <span className="text-sm md:text-base lg:text-lg font-medium">Mua gói</span>
+            </TabsTrigger>
+          </TabsList>
 
-          <TabsContent value="deposit" className="space-y-4">
-            <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-100">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-blue-200/30 rounded-full blur-xl -translate-y-8 translate-x-8"></div>
-              <CardHeader className="relative z-10 pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <div className="p-2 bg-blue-500 rounded-full text-white shadow-lg">
-                    <CreditCard className="h-4 w-4" />
-                  </div>
-                  Nạp tiền vào ví
-                </CardTitle>
-                <CardDescription className="text-sm">
-                  Nạp tiền vào ví để mua các gói dịch vụ. Tối thiểu 10,000 VNĐ.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative z-10 space-y-4">
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border border-white/50 shadow-sm">
-                  <Label htmlFor="depositAmount" className="text-sm font-semibold text-gray-700 mb-3 block">
-                    Số tiền muốn nạp (VNĐ)
+          <TabsContent value="deposit" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
+            <Card className="border-0 shadow-md bg-white rounded-2xl p-3 md:p-4 lg:p-6">
+              <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4 lg:mb-6">
+                <div className="p-2 md:p-2.5 lg:p-3 bg-blue-100 rounded-full">
+                  <CreditCard className="h-5 md:h-6 lg:h-7 w-5 md:w-6 lg:w-7 text-blue-600" />
+                </div>
+                <h3 className="text-base md:text-lg lg:text-xl font-semibold">Nạp tiền vào ví</h3>
+              </div>
+              <div className="space-y-3 md:space-y-4 lg:space-y-6">
+                <div className="relative">
+                  <Label htmlFor="depositAmount" className="text-xs md:text-sm lg:text-base font-medium text-gray-700 block mb-1 md:mb-2 text-left">
+                    Số tiền
                   </Label>
-                  <div className="relative">
-                    <Input
-                      id="depositAmount"
-                      type="number"
-                      min="50000"
-                      step="50000"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(parseInt(e.target.value) || 0)}
-                      placeholder="Ví dụ: 50000"
-                      className="text-lg h-14 pl-6 pr-16 border-2 border-blue-200 focus:border-blue-400 rounded-xl shadow-sm"
-                    />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-                      VNĐ
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    {[50000, 100000, 200000, 500000].map((amount) => (
-                      <Button
-                        key={amount}
-                        variant={depositAmount === amount ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setDepositAmount(amount)}
-                        className={`flex-1 ${depositAmount === amount ? 'bg-blue-500 hover:bg-blue-600' : 'border-blue-200 hover:bg-blue-50'}`}
-                      >
-                        {amount.toLocaleString('vi-VN')}
-                      </Button>
-                    ))}
-                  </div>
+                  <Input
+                    id="depositAmount"
+                    type="number"
+                    min="50000"
+                    step="50000"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(parseInt(e.target.value) || 0)}
+                    placeholder="Nhập số tiền"
+                    className="h-8 md:h-10 lg:h-12 pl-4 pr-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl text-base md:text-lg lg:text-xl"
+                  />
                 </div>
-
+                <div className="grid grid-cols-2 gap-1 md:gap-2 lg:gap-3">
+                  {[50000, 100000, 200000, 500000].map((amount) => (
+                    <Button
+                      key={amount}
+                      variant={depositAmount === amount ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setDepositAmount(amount)}
+                      className="h-8 md:h-10 lg:h-12 rounded-xl justify-center"
+                    >
+                      {amount.toLocaleString('vi-VN')}
+                    </Button>
+                  ))}
+                </div>
                 <Button
                   onClick={handleDeposit}
                   disabled={loading || depositAmount < 50000}
-                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                  className="w-full h-12 md:h-14 lg:h-16 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md transition-all text-sm md:text-base lg:text-lg"
                   size="lg"
                 >
                   {loading ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Đang xử lý...
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="w-5 md:w-6 lg:w-7 h-5 md:h-6 lg:h-7 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Đang xử lý
                     </div>
                   ) : (
-                    <div className="flex items-center gap-3">
-                      <CreditCard className="h-5 w-5" />
-                      Nạp {depositAmount.toLocaleString('vi-VN')} VNĐ
-                    </div>
+                    `Nạp ${depositAmount.toLocaleString('vi-VN')} VNĐ`
                   )}
                 </Button>
-              </CardContent>
+              </div>
             </Card>
           </TabsContent>
 
-          <TabsContent value="purchase" className="space-y-6">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Chọn gói dịch vụ phù hợp</h2>
-              <p className="text-gray-600">Nâng cấp tài khoản để trải nghiệm đầy đủ các tính năng cao cấp</p>
+          <TabsContent value="purchase" className="space-y-8 mt-6">
+            <div className="text-center mb-8 lg:mb-12">
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-2">Chọn gói dịch vụ</h2>
+              <p className="text-gray-600 text-sm lg:text-base max-w-2xl mx-auto">Nâng cấp để mở khóa tính năng cao cấp và trải nghiệm tốt hơn</p>
             </div>
 
-            <Tabs value={selectedLicense} onValueChange={(value) => setSelectedLicense(value as 'BASIC' | 'PRO')}>
-              <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-white/30 mb-8">
-                <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-1">
-                  <TabsTrigger
-                    value="BASIC"
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg"
-                  >
-                    <Star className="h-4 w-4" />
-                    Gói BASIC
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="PRO"
-                    className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-500 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg"
-                  >
-                    <Crown className="h-4 w-4" />
-                    Gói PRO
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+            <Tabs value={selectedLicense} onValueChange={(value) => setSelectedLicense(value as 'BASIC' | 'PRO')} className="w-full">
+              <TabsList className="grid grid-cols-2 bg-white rounded-xl shadow-sm border border-gray-200 mb-6 md:mb-8 lg:mb-12">
+                <TabsTrigger value="BASIC" className="gap-2 rounded-lg data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+                  <Star className="h-4 md:h-5 lg:h-6 w-4 md:w-5 lg:w-6 flex-shrink-0" />
+                  <span className="text-sm md:text-base lg:text-lg font-medium">BASIC</span>
+                </TabsTrigger>
+                <TabsTrigger value="PRO" className="gap-2 rounded-lg data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:shadow-md transition-all">
+                  <Crown className="h-4 md:h-5 lg:h-6 w-4 md:w-5 lg:w-6 flex-shrink-0" />
+                  <span className="text-sm md:text-base lg:text-lg font-medium">PRO</span>
+                </TabsTrigger>
+              </TabsList>
 
               <TabsContent value="BASIC" className="space-y-6">
-                <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-200 transform transition-all duration-500 hover:scale-105 hover:shadow-3xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-500/20"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-300/30 rounded-full blur-2xl -translate-y-16 translate-x-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-300/30 rounded-full blur-xl translate-y-12 -translate-x-12"></div>
-
-                  <CardHeader className="relative z-10 text-center pb-8">
-                    <div className="flex justify-center mb-4">
-                      <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full text-white shadow-xl">
-                        <Star className="h-8 w-8" />
+                <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-1 md:p-2 lg:p-3 text-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-purple-500/10 rounded-2xl"></div>
+                  <div className="relative z-10">
+                    <div className="flex justify-center mb-4 lg:mb-6">
+                      <div className="p-2 lg:p-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full text-white shadow-lg">
+                        <Star className="h-6 lg:h-8 w-6 lg:w-8" />
                       </div>
                     </div>
-                    <CardTitle className="text-3xl font-bold text-gray-800 mb-2">Gói BASIC</CardTitle>
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <span className="text-4xl font-bold text-blue-600">{formatPrice(50000)}</span>
-                      <span className="text-gray-600">/tháng</span>
+                    <h3 className="text-lg md:text-xl lg:text-2xl font-bold text-gray-800 mb-2 md:mb-3">Gói BASIC</h3>
+                    <div className="flex items-center justify-center gap-1 md:gap-2 mb-3 md:mb-4 lg:mb-6">
+                      <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-blue-600">{formatPrice(50000)}</span>
+                      <span className="text-xs md:text-sm lg:text-base text-gray-600">/tháng</span>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-700 border-blue-200 px-4 py-2 text-sm font-medium">
-                      Giới hạn 5 tài khoản
-                    </Badge>
-                  </CardHeader>
-
-                  <CardContent className="relative z-10 px-8 pb-8">
-                    <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg">
-                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        Tính năng nổi bật:
+                    <div className="mt-6 lg:mt-8 space-y-3 lg:space-y-4">
+                      <h4 className="font-semibold text-gray-700 flex items-center gap-2 justify-center text-sm lg:text-base">
+                        <CheckCircle className="h-4 lg:h-5 w-4 lg:w-5 text-green-500" />
+                        Tính năng
                       </h4>
-                      <div className="space-y-3">
+                      <ul className="space-y-2 lg:space-y-3 text-sm lg:text-base text-gray-600 max-h-48 lg:max-h-none overflow-y-auto">
                         {packages.BASIC?.features.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/50 transition-colors">
-                            <div className="p-1 bg-green-100 rounded-full">
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            </div>
-                            <span className="text-gray-700 font-medium">{feature}</span>
-                          </div>
+                          <li key={index} className="flex items-center gap-3 lg:gap-4">
+                            <CheckCircle className="h-4 lg:h-5 w-4 lg:w-5 text-green-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               </TabsContent>
 
               <TabsContent value="PRO" className="space-y-6">
-                <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-yellow-50 via-orange-100 to-red-200 transform transition-all duration-500 hover:scale-105 hover:shadow-3xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-500/20"></div>
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-300/30 rounded-full blur-2xl -translate-y-16 translate-x-16"></div>
-                  <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-300/30 rounded-full blur-xl translate-y-12 -translate-x-12"></div>
-
-                  <CardHeader className="relative z-10 text-center pb-8">
-                    <div className="flex justify-center mb-4">
-                      <div className="p-4 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-full text-white shadow-xl">
-                        <Crown className="h-8 w-8" />
+                <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-pink-100 rounded-2xl p-1 md:p-2 lg:p-3 text-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-pink-500/10 rounded-2xl"></div>
+                  <div className="relative z-10">
+                    <div className="flex justify-center mb-4 lg:mb-6">
+                      <div className="p-2 lg:p-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full text-white shadow-lg">
+                        <Crown className="h-6 lg:h-8 w-6 lg:w-8" />
                       </div>
                     </div>
-                    <CardTitle className="text-3xl font-bold text-gray-800 mb-2">Gói PRO</CardTitle>
-                    <div className="flex items-center justify-center gap-2 mb-4">
-                      <span className="text-4xl font-bold text-yellow-600">{formatPrice(100000)}</span>
-                      <span className="text-gray-600">/tháng</span>
+                    <h3 className="text-xl lg:text-3xl font-bold text-gray-800 mb-2">Gói PRO</h3>
+                    <div className="flex items-center justify-center gap-2 mb-4 lg:mb-6">
+                      <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-purple-600">{formatPrice(100000)}</span>
+                      <span className="text-gray-600 text-sm lg:text-base">/tháng</span>
                     </div>
-                    <Badge className="bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-700 border-yellow-200 px-4 py-2 text-sm font-medium">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Giới hạn 15 tài khoản - Ưu tiên cao nhất
-                    </Badge>
-                  </CardHeader>
-
-                  <CardContent className="relative z-10 px-8 pb-8">
-                    <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg">
-                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        Tính năng cao cấp:
+                    <div className="mt-6 lg:mt-8 space-y-3 lg:space-y-4">
+                      <h4 className="font-semibold text-gray-700 flex items-center gap-2 justify-center text-sm lg:text-base">
+                        <CheckCircle className="h-4 lg:h-5 w-4 lg:w-5 text-green-500" />
+                        Tính năng
                       </h4>
-                      <div className="space-y-3">
+                      <ul className="space-y-2 lg:space-y-3 text-sm lg:text-base text-gray-600 max-h-48 lg:max-h-none overflow-y-auto">
                         {packages.PRO?.features.map((feature, index) => (
-                          <div key={index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/50 transition-colors">
-                            <div className="p-1 bg-green-100 rounded-full">
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            </div>
-                            <span className="text-gray-700 font-medium">{feature}</span>
-                          </div>
+                          <li key={index} className="flex items-center gap-3 lg:gap-4">
+                            <CheckCircle className="h-4 lg:h-5 w-4 lg:w-5 text-green-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </div>
-                  </CardContent>
+                  </div>
                 </Card>
               </TabsContent>
             </Tabs>
 
+            {/* Summary - Expanded on desktop */}
             {(paymentInfo.totalAmount || 0) > 0 && (
-              <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-r from-purple-50 to-pink-50">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-200/30 rounded-full blur-xl -translate-y-8 translate-x-8"></div>
-                <CardHeader className="relative z-10">
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-white shadow-lg">
-                      <Calculator className="h-6 w-6" />
+              <Card className="border-0 shadow-md bg-white rounded-2xl p-1 md:p-2 lg:p-3 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl opacity-50"></div>
+                <div className="relative z-10">
+                  <div className="flex items-center gap-3 mb-4 lg:mb-6">
+                    <div className="p-1 md:p-2 lg:p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-white">
+                      <Calculator className="h-5 lg:h-6 w-5 lg:w-6" />
                     </div>
-                    Tổng kết đơn hàng
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/50 shadow-lg">
-                    <div className="space-y-4">
-                      {selectedLicense && (
-                        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-100">
-                          <span className="font-medium text-gray-700">Gói {selectedLicense}:</span>
-                          <span className="font-bold text-blue-600">{formatPrice(paymentInfo.licensePrice || 0)}</span>
-                        </div>
-                      )}
-                      {paymentInfo.accountPlus && paymentInfo.accountPlus > 0 && (
-                        <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border border-green-100">
-                          <span className="font-medium text-gray-700">{paymentInfo.accountPlus} Account Plus:</span>
-                          <span className="font-bold text-green-600">{formatPrice(paymentInfo.accountPlusPrice || 0)}</span>
-                        </div>
-                      )}
-                      <div className="border-t-2 border-gray-200 pt-4">
-                        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg border-2 border-purple-200">
-                          <span className="text-xl font-bold text-gray-800">Tổng cộng:</span>
-                          <span className="text-2xl font-bold text-purple-600">{formatPrice(paymentInfo.totalAmount || 0)}</span>
-                        </div>
+                    <h3 className="text-lg lg:text-xl font-semibold">Tổng kết đơn hàng</h3>
+                  </div>
+                  <div className="space-y-4 lg:space-y-6">
+                    {selectedLicense && (
+                      <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-blue-50 rounded-lg border-l-4 border-blue-200">
+                        <span className="text-sm lg:text-base font-medium">Gói {selectedLicense}</span>
+                        <span className="font-bold text-blue-600 text-lg lg:text-xl">{formatPrice(paymentInfo.licensePrice || 0)}</span>
                       </div>
-                      {calculating && (
-                        <div className="flex items-center justify-center gap-2 text-purple-600 bg-purple-50 p-3 rounded-lg">
-                          <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                          <span className="text-sm font-medium">Đang tính toán...</span>
-                        </div>
-                      )}
+                    )}
+                    {paymentInfo.accountPlus && paymentInfo.accountPlus > 0 && (
+                      <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-green-50 rounded-lg border-l-4 border-green-200">
+                        <span className="text-sm lg:text-base font-medium">{paymentInfo.accountPlus} Account Plus</span>
+                        <span className="font-bold text-green-600 text-lg lg:text-xl">{formatPrice(paymentInfo.accountPlusPrice || 0)}</span>
+                      </div>
+                    )}
+                    <div className="border-t pt-4 lg:pt-6">
+                      <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg border border-purple-200">
+                        <span className="text-xl lg:text-2xl font-bold">Tổng cộng</span>
+                        <span className="text-2xl lg:text-3xl font-bold text-purple-600">{formatPrice(paymentInfo.totalAmount || 0)}</span>
+                      </div>
                     </div>
+                    {calculating && (
+                      <div className="flex items-center justify-center gap-3 text-purple-600 p-1 md:p-2 lg:p-3 bg-purple-50 rounded-lg">
+                        <div className="w-5 lg:w-6 h-5 lg:h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-base lg:text-lg font-medium">Đang tính toán...</span>
+                      </div>
+                    )}
                   </div>
-                </CardContent>
+                </div>
               </Card>
             )}
 
-            {wallet && (paymentInfo.totalAmount || 0) > 0 && (
-              <Card className="relative overflow-hidden border-0 shadow-xl bg-gradient-to-r from-green-50 to-emerald-50">
-                <CardContent className="relative z-10 p-6">
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/50 shadow-sm">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-700">Số dư ví hiện tại:</span>
-                      <span className={`font-bold text-lg ${wallet.balance >= (paymentInfo.totalAmount || 0) ? 'text-green-600' : 'text-red-600'}`}>
-                        {formatPrice(wallet.balance)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
+            {/* Purchase Button - Larger on desktop */}
             <Button
               onClick={handlePurchase}
               disabled={loading || calculating || (paymentInfo.totalAmount || 0) <= 0}
-              className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+              className="w-full h-12 md:h-14 lg:h-16 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg transition-all text-base lg:text-lg"
               size="lg"
             >
               {loading ? (
-                <div className="flex items-center gap-3">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-5 lg:w-6 h-5 lg:h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Đang xử lý...</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
-                  <Wallet className="h-5 w-5" />
+                <div className="flex items-center gap-2 md:gap-3">
+                  <Wallet className="h-5 lg:h-6 w-5 lg:w-6" />
                   <span>Mua ngay từ ví</span>
                 </div>
               )}
             </Button>
 
+            {/* Alert - Styled for desktop */}
             {(paymentInfo.totalAmount || 0) > 0 && wallet && wallet.balance < (paymentInfo.totalAmount || 0) && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700 font-medium">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1 bg-red-100 rounded-full">
-                      <span className="text-red-600 text-sm">❌</span>
-                    </div>
-                    <span>
-                      <strong>Không đủ số dư!</strong> Bạn cần nạp thêm {formatPrice((paymentInfo.totalAmount || 0) - wallet.balance)} vào ví.
-                    </span>
+              <Alert className="border-l-4 border-red-500 bg-red-50 rounded-lg p-1 md:p-2 lg:p-3">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-1 md:p-2 lg:p-3 bg-red-100 rounded-lg">
+                    <span className="text-red-600 text-lg lg:text-xl">!</span>
                   </div>
-                </AlertDescription>
+                  <div className="flex-1">
+                    <strong className="text-red-800 text-sm md:text-base lg:text-lg block">Không đủ số dư!</strong>
+                    <p className="text-red-700 text-sm lg:text-base mt-1">Bạn cần nạp thêm {formatPrice((paymentInfo.totalAmount || 0) - wallet.balance)} vào ví để hoàn tất.</p>
+                  </div>
+                </div>
               </Alert>
             )}
           </TabsContent>
         </Tabs>
 
-        {/* Deposit QR Modal */}
+        {/* Modal - More moderate width */}
         <Dialog open={showDepositQR} onOpenChange={(open) => {
           if (!open) {
             handleCloseDepositModal();
           }
         }}>
-          <DialogContent
-            layout="horizontal"
-            className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 border-0 shadow-3xl p-4 md:p-6"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-200/20 to-purple-200/20 rounded-lg"></div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/30 rounded-full blur-2xl -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-200/30 rounded-full blur-xl translate-y-12 -translate-x-12"></div>
-
-            <DialogHeader className="relative z-10 text-center pb-4 md:col-span-2 md:text-center">
+          <DialogContent className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl w-full bg-white rounded-2xl p-1 md:p-2 lg:p-3 shadow-2xl">
+            {/* Header */}
+            <DialogHeader className="text-center pb-6">
               <div className="flex justify-center mb-4">
-                <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full text-white shadow-xl">
-                  <CreditCard className="h-8 w-8" />
+                <div className="p-1 md:p-2 lg:p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full text-white shadow-lg">
+                  <CreditCard className="h-6 lg:h-8 w-6 lg:w-8" />
                 </div>
               </div>
-              <DialogTitle className="text-2xl font-bold text-gray-800 text-center">Quét QR để nạp tiền</DialogTitle>
-              <DialogDescription className="text-base font-medium text-center">
+              <DialogTitle className="text-xl lg:text-2xl font-bold text-gray-800">Quét QR để nạp tiền</DialogTitle>
+              <DialogDescription className="text-sm lg:text-base font-medium text-gray-600">
                 Mã nạp tiền: <span className="font-mono bg-blue-100 px-2 py-1 rounded text-blue-700">{depositData?.depositId}</span>
               </DialogDescription>
             </DialogHeader>
 
-            <div className="relative z-10 space-y-6 md:space-y-0 md:grid md:grid-cols-2 md:gap-6">
-              {/* QR Code Section */}
-              <div className="flex justify-center items-center">
-                <div className="p-4 bg-white rounded-2xl shadow-xl border-4 border-white">
+            {/* Content - Side-by-side on desktop */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-3 lg:gap-4">
+              {/* QR */}
+              <div className="flex flex-col items-center">
+                <div className="p-1 md:p-2 lg:p-3 bg-white rounded-2xl shadow-lg border">
                   <img
                     src={depositData?.qrCode}
                     alt="QR Code nạp tiền"
-                    className="w-40 h-40 md:w-48 md:h-48 mx-auto"
+                    className="w-32 lg:w-48 h-32 lg:h-48 mx-auto"
                   />
+                  <p className="mt-2 text-sm lg:text-base text-center text-gray-500">Quét mã QR để thanh toán</p>
                 </div>
+                {depositData?.qrCode && (
+                  <Button variant="outline" size="sm" onClick={downloadQR} className="mt-2 md:mt-4 px-3 md:px-4 py-1 md:py-2 border-blue-200">
+                    <Download className="h-4 w-4 mr-2" />
+                    Tải QR Code
+                  </Button>
+                )}
               </div>
 
-              {/* Bank Info Section */}
+              {/* Bank Info */}
               <div className="space-y-4">
-                <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-lg">
-                  <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                <div className="bg-gray-50 rounded-2xl p-4 lg:p-6 border">
+                  <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-xs md:text-sm lg:text-base">
                     <div className="p-2 bg-blue-100 rounded-full">
                       <CreditCard className="h-4 w-4 text-blue-600" />
                     </div>
                     Thông tin chuyển khoản
                   </h3>
-                  <div className="grid gap-2 text-sm">
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <div className="space-y-3 text-xs md:text-sm lg:text-base">
+                    <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-white rounded-lg">
                       <span className="font-medium text-gray-600">Ngân hàng:</span>
-                      <span className="font-mono font-semibold text-gray-800 text-xs">{depositData?.bankInfo.bankName}</span>
+                      <span className="font-mono font-semibold">{depositData?.bankInfo.bankName}</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-white rounded-lg">
                       <span className="font-medium text-gray-600">Số tài khoản:</span>
-                      <span className="font-mono font-semibold text-gray-800 text-xs">{depositData?.bankInfo.bankNumber}</span>
+                      <span className="font-mono font-semibold break-all">{depositData?.bankInfo.bankNumber}</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-white rounded-lg">
                       <span className="font-medium text-gray-600">Chủ tài khoản:</span>
-                      <span className="font-mono font-semibold text-gray-800 text-xs">{depositData?.bankInfo.accountName}</span>
+                      <span className="font-mono font-semibold break-all">{depositData?.bankInfo.accountName}</span>
                     </div>
-                    <div className="flex justify-between items-center p-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg border-2 border-green-200">
+                    <div className="flex justify-between items-center p-1 md:p-2 lg:p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
                       <span className="font-medium text-gray-600">Số tiền:</span>
-                      <span className="font-mono font-bold text-green-700">{formatPrice(depositData?.amount || 0)}</span>
+                      <span className="font-bold text-green-700">{formatPrice(depositData?.amount || 0)}</span>
                     </div>
-                    <div className="flex justify-between items-start p-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border-2 border-blue-200">
+                    <div className="flex justify-between items-start p-1 md:p-2 lg:p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
                       <span className="font-medium text-gray-600">Nội dung:</span>
-                      <span className="font-mono font-bold text-gray-700 break-all text-right max-w-64 leading-tight">{depositData?.bankInfo.description}</span>
+                      <div className="flex-1 ml-2 text-right">
+                        <span className="font-mono font-bold text-gray-700 break-all">{depositData?.bankInfo.description}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <Alert className="border-yellow-200 bg-yellow-50">
-                  <AlertDescription className="text-yellow-800">
-                    <div className="flex items-start gap-2">
-                      <div className="p-1 bg-yellow-100 rounded-full mt-0.5">
-                        <span className="text-yellow-600 text-xs">⚠️</span>
-                      </div>
-                      <div className="text-xs">
-                        <strong className="font-semibold">Quan trọng:</strong> Vui lòng chuyển khoản chính xác số tiền và ghi đúng nội dung để tiền được cộng tự động vào ví.
-                        <br />
-                        <span className="text-xs mt-1 block">Đang kiểm tra nạp tiền mỗi 5 giây...</span>
+                <Alert className="border-l-4 border-yellow-400 bg-yellow-50 rounded-lg p-1 md:p-2 lg:p-3">
+                  <div className="flex items-start gap-3">
+                    <div className="p-1 md:p-2 lg:p-3 bg-yellow-100 rounded-lg flex-shrink-0">
+                      <span className="text-yellow-600">⚠️</span>
+                    </div>
+                    <div className="flex-1">
+                      <strong className="font-semibold block text-xs md:text-sm lg:text-base">Quan trọng:</strong>
+                      <p className="text-sm lg:text-base mt-1">Vui lòng chuyển khoản chính xác số tiền và nội dung để tiền được cộng tự động.</p>
+                      <div className="flex items-center gap-2 mt-2 text-xs md:text-sm lg:text-base">
+                        <RefreshCw className="h-4 w-4 animate-spin text-yellow-600" />
+                        <span>Đang kiểm tra mỗi 5 giây...</span>
                       </div>
                     </div>
-                  </AlertDescription>
+                  </div>
                 </Alert>
               </div>
             </div>

@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         user: {
           select: {
             name: true,
-            zalo_id: true,
+            zaloId: true,
             email: true
           }
         }
@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ wallets });
 
   } catch (error) {
-    console.error('Admin wallets fetch error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Failed to fetch wallets:', error);
+    return NextResponse.json({ error: 'Failed to fetch wallets' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

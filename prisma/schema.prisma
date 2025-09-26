@@ -228,7 +228,7 @@ model WeddingReceived {
 model UserGroup {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(255)
-  label     String   @unique @db.VarChar(50)
+  label     String   @db.VarChar(50)
   creatorId String   @map("creatorId") @db.VarChar(255)
   createdAt DateTime @default(now()) @map("createdAt")
   updatedAt DateTime @updatedAt @map("updatedAt")
@@ -363,6 +363,7 @@ enum TransactionType {
   PURCHASE   // Mua package
   REFUND     // Hoàn tiền
   BONUS      // Thưởng
+  PENALTY    // Phạt
 }
 
 model WalletTransaction {

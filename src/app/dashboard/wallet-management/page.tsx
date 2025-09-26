@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Wallet, Users, TrendingUp, TrendingDown, Gift, CreditCard, Plus, Minus, Eye, UserCheck } from 'lucide-react';
+import { Wallet, Users, TrendingUp, TrendingDown, Gift, CreditCard, Plus, Minus, Eye } from 'lucide-react';
 import { formatCurrency, getTransactionTypeLabel, getTransactionTypeColor } from '@/lib/wallet.utils';
 import { toast } from '@/hooks/useToast';
 
@@ -20,7 +20,7 @@ interface UserWallet {
   userId: string;
   user: {
     name: string;
-    zalo_id: string;
+    zaloId: string;
     email?: string;
   };
   balance: number;
@@ -74,9 +74,20 @@ export default function WalletManagementPage() {
       const data = await response.json();
       if (response.ok) {
         setWallets(data.wallets);
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: data.error || 'Không thể tải danh sách ví',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Failed to fetch wallets:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tải danh sách ví',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -88,9 +99,20 @@ export default function WalletManagementPage() {
       const data = await response.json();
       if (response.ok) {
         setTransactions(data.transactions);
+      } else {
+        toast({
+          title: 'Lỗi',
+          description: data.error || 'Không thể tải giao dịch',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tải giao dịch',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -99,7 +121,7 @@ export default function WalletManagementPage() {
       toast({
         title: 'Lỗi',
         description: 'Vui lòng điền đầy đủ thông tin',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
@@ -108,7 +130,7 @@ export default function WalletManagementPage() {
       const response = await fetch('/api/admin/wallets/adjust', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(adjustmentData)
+        body: JSON.stringify(adjustmentData),
       });
 
       const data = await response.json();
@@ -116,24 +138,28 @@ export default function WalletManagementPage() {
       if (response.ok) {
         toast({
           title: 'Thành công',
-          description: `Đã ${adjustmentData.type === 'BONUS' ? 'cộng' : 'trừ'} ${formatCurrency(adjustmentData.amount)} cho user`
+          description: `Đã ${adjustmentData.type === 'BONUS' ? 'cộng' : 'trừ'} ${formatCurrency(adjustmentData.amount)} cho user`,
         });
         setAdjustmentOpen(false);
         setAdjustmentData({
           userId: '',
           amount: 0,
           type: 'BONUS',
-          description: ''
+          description: '',
         });
-        fetchWallets(); // Refresh list
+        fetchWallets(); // Refresh
       } else {
-        throw new Error(data.error);
+        toast({
+          title: 'Lỗi',
+          description: data.error || 'Không thể thực hiện',
+          variant: 'destructive',
+        });
       }
     } catch (error: any) {
       toast({
         title: 'Lỗi',
         description: error.message || 'Không thể thực hiện điều chỉnh ví',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -225,7 +251,7 @@ export default function WalletManagementPage() {
                   <SelectContent>
                     {wallets.map((wallet) => (
                       <SelectItem key={wallet.userId} value={wallet.userId}>
-                        {wallet.user.name} ({wallet.user.zalo_id})
+                        {wallet.user.name} ({wallet.user.zaloId})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -355,7 +381,7 @@ export default function WalletManagementPage() {
                     <TableCell>
                       <div>
                         <div className="font-medium">{wallet.user.name}</div>
-                        <div className="text-sm text-muted-foreground">{wallet.user.zalo_id}</div>
+                        <div className="text-sm text-muted-foreground">{wallet.user.zaloId}</div>
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono">

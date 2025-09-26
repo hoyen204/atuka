@@ -234,7 +234,7 @@ export default function DashboardLayout({
     },
     {
       name: "Quản Lý Ví Tiền",
-      href: "/dashboard/admin/wallet-management",
+      href: "/dashboard/wallet-management",
       icon: CreditCard,
       description: "Quản lý ví tiền users",
     },

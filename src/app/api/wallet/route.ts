@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
-import { getOrCreateWallet, getWalletTransactions } from '@/lib/wallet.utils';
+import { getOrCreateWallet, getWalletTransactions } from '@/lib/wallet.service.utils';
 
 export async function GET(request: NextRequest) {
   try {
