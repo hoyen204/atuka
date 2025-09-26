@@ -10,7 +10,7 @@ datasource db {
 
 // User model - main user accounts
 model User {
-  name               String
+  name               String      @db.VarChar(255)
   zaloId             String      @id @map("zalo_id") @db.VarChar(255)
   licenseType        LicenseType @map("license_type")
   licenseExpired     DateTime?   @map("license_expired")
@@ -84,7 +84,6 @@ model Account {
 
   // Relations
   creator           User                   @relation(fields: [creatorId], references: [zaloId], onDelete: Cascade, onUpdate: Cascade)
-  weddingReceived   WeddingReceived[]
   accountGroups     AccountGroup[]
 
   @@index([toggle])
@@ -218,9 +217,6 @@ model WeddingReceived {
   accountCreatorId String          @map("accountCreatorId") @db.VarChar(255)
   amount           Int
   type             WeddingGiftType
-
-  // Relations
-  account Account? @relation(fields: [accountId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   @@index([accountId])
   @@index([roomId])

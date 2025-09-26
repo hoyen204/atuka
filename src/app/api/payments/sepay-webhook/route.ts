@@ -52,7 +52,14 @@ export async function POST(request: NextRequest) {
 
     // Trích xuất orderId từ content
     // Ví dụ: "CT DEN:526814888278 SEVQRNAP1758811960311van1c63e0 FT25269558700806"
-    const contents = payload.content.split(' ');
+    const contents = payload.content.includes(' ') ? payload.content.split(' ') : payload.content.includes('-') ? payload.content.split('-') : [];
+    if (contents.length === 0) {
+      console.log('No contents found, skipping');
+      return NextResponse.json(
+        { message: 'No contents found' },
+        { status: 200 }
+      );
+    }
     const pattern = /^(SEVQRNAP)\d+/;
     let orderId = '';
 
