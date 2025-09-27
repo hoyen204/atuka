@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Name and label are required' }, { status: 400 });
     }
 
-    const existingGroup = await (prisma as any).userGroup.findUnique({
+    const existingGroup = await (prisma as any).userGroup.findFirst({
       where: { label }
     });
 
